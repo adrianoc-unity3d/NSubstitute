@@ -84,8 +84,35 @@ namespace NSubstitute
         public static T ForPartsOf<T>(params object[] constructorArguments) 
             where T : class
         {
+            return (T) ForPartsOf(new[] {typeof (T)}, constructorArguments);
+        }
+
+        public static T1 ForPartsOf<T1, T2>(params object[] constructorArguments) 
+            where T1 : class
+            where T2 : class
+        {
+            return (T1) ForPartsOf(new[] {typeof (T1), typeof(T2) }, constructorArguments);
+        }
+
+        public static T1 ForPartsOf<T1, T2, T3>(params object[] constructorArguments) 
+            where T1 : class
+            where T2 : class
+            where T3 : class
+        {
+            return (T1) ForPartsOf(new[] {typeof (T1), typeof(T2), typeof(T3) }, constructorArguments);
+        }
+
+        public static object ForPartsOf(Type[] typesToProxy, object[] constructorArguments) 
+        {
             var substituteFactory = SubstitutionContext.Current.SubstituteFactory;
-            return (T) substituteFactory.CreatePartial(new[] {typeof (T)}, constructorArguments);
+            return substituteFactory.CreatePartial(typesToProxy, constructorArguments);
+        }
+
+        public class StaticProxy<T> {}
+
+        public static StaticProxy<T> ForStatic<T>()
+        {
+            return For<StaticProxy<T>>();
         }
     }
 }

@@ -176,6 +176,11 @@ namespace NSubstitute
             return substitute;
         }
 
+        public static void Static<T>(this Substitute.StaticProxy<T> @this, Action action)
+        {
+            action();
+        }
+
         /// <summary>
         /// Checks this substitute has received the following call the required number of times.
         /// </summary>
