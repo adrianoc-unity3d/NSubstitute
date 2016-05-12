@@ -31,14 +31,16 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static object CallMockMethodOrImpl(object mockedInstance, Type[] genericTypes, object[] callArgs)
+        public static object CallMockMethodOrImpl(object mockedInstance, Type[] methodGenericTypes, object[] methodCallArgs)
         {
             var mockedMethod = (MethodInfo)new StackTrace(1).GetFrame(0).GetMethod();
+            var mockedType = mockedInstance?.GetType() ?? mockedMethod.DeclaringType;
+            Debug.Assert(mockedType != null, "mockedType != null");
+
             if (mockedMethod.IsGenericMethodDefinition)
-                mockedMethod = mockedMethod.MakeGenericMethod(genericTypes);
+                mockedMethod = mockedMethod.MakeGenericMethod(methodGenericTypes);
 
             var originalMethod = GetOrAddOriginalMethodCache(mockedMethod);
-            var mockedType = mockedInstance?.GetType() ?? mockedMethod.DeclaringType;
 
             TypeFieldCache typeFieldCache;
             if (s_TypeFieldCache.TryGetValue(mockedType, out typeFieldCache))
@@ -51,7 +53,7 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
                 {
                     var invocation = new Invocation
                     {
-                        Arguments = callArgs,
+                        Arguments = methodCallArgs,
                         Method = mockedMethod,
                         MethodInvocationTarget = originalMethod,
                         Proxy = mockedInstance,
@@ -59,12 +61,12 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
 
                     interceptor.Intercept(invocation);
 
-                    Array.Copy(invocation.Arguments, callArgs, callArgs.Length);
+                    Array.Copy(invocation.Arguments, methodCallArgs, methodCallArgs.Length);
                     return invocation.ReturnValue;
                 }
             }
 
-            return originalMethod.Invoke(mockedInstance, callArgs);
+            return originalMethod.Invoke(mockedInstance, methodCallArgs);
         }
 
         class Invocation : IInvocation
