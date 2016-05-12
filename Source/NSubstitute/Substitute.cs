@@ -1,5 +1,6 @@
 using System;
 using NSubstitute.Core;
+using NSubstitute.Proxies.CastleDynamicProxy;
 
 namespace NSubstitute
 {
@@ -108,7 +109,13 @@ namespace NSubstitute
             return substituteFactory.CreatePartial(typesToProxy, constructorArguments);
         }
 
-        public class StaticProxy<T> {}
+        public class StaticProxy<T> : IDisposable
+        {
+            public void Dispose()
+            {
+                CastlePatchedInterceptorRegistry.UnMockStatics(typeof(T));
+            }
+        }
 
         public static StaticProxy<T> ForStatic<T>()
         {

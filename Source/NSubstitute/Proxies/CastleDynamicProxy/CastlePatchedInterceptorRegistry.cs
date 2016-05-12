@@ -18,7 +18,13 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
             if (field == null)
                 return null;
 
-            return (instance, interceptor) => field.SetValue(instance, interceptor);
+            return (instance, interceptor) =>
+            {
+                if (field.GetValue(instance) != null)
+                    throw new SubstituteException("Unexpected double hook of an instance");
+
+                field.SetValue(instance, interceptor);
+            };
         }
 
         public static Action<IInterceptor> GetStaticMocker(Type forType)
@@ -27,7 +33,25 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
             if (field == null)
                 return null;
 
-            return interceptor => field.SetValue(null, interceptor);
+            return interceptor =>
+            {
+                if (field.GetValue(null) != null)
+                    throw new SubstituteException("Unexpected double hook of a type (did you forget to dispose your previous substitute?)");
+
+                field.SetValue(null, interceptor);
+            };
+        }
+
+        public static void UnMockStatics(Type forType)
+        {
+            var field = GetOrAddTypeFieldCache(forType).StaticInterceptor;
+            if (field == null)
+                throw new SubstituteException("Unexpected non-patched type when attempting to unmock statics");
+
+            if (field.GetValue(null) == null)
+                throw new SubstituteException("Unexpected unmock of an already non-mocked type");
+
+            field.SetValue(null, null);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
