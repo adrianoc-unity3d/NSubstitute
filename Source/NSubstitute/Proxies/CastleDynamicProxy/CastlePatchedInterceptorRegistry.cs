@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using Castle.DynamicProxy;
 using NSubstitute.Exceptions;
 
@@ -148,10 +147,6 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
 
             // standard prefix on renamed original implementations by cil rewriter
             var originalMethodName = "__mock_" + mockedMethod.Name;
-
-            // have to put the prefix back at the front or it won't act like a property or event or whatever
-            if (mockedMethod.IsSpecialName)
-                originalMethodName = Regex.Replace(originalMethodName, @"^__mock_([a-z]+)_", "$1___mock_");
 
             // need to convert back to generic definition so we can look it up, even though we're just going to go back and instantiate it
             var paramTypesToMatch = (mockedMethod.IsGenericMethod ? mockedMethod.GetGenericMethodDefinition() : mockedMethod)
