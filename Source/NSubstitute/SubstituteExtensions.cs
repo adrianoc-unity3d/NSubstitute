@@ -176,7 +176,7 @@ namespace NSubstitute
             return substitute;
         }
 
-        public static Substitute.StaticProxy<T> Static<T>(this Substitute.StaticProxy<T> @this, Action action)
+        public static Substitute.StaticProxy Static(this Substitute.StaticProxy @this, Action action)
         {
             action();
             return @this;

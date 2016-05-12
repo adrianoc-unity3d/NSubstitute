@@ -109,17 +109,29 @@ namespace NSubstitute
             return substituteFactory.CreatePartial(typesToProxy, constructorArguments);
         }
 
-        public class StaticProxy<T> : IDisposable
+        public class StaticProxy : IDisposable
         {
+            readonly Type _staticType;
+
+            public StaticProxy(Type staticType)
+            {
+                _staticType = staticType;
+            }
+
             public void Dispose()
             {
-                CastlePatchedInterceptorRegistry.UnMockStatics(typeof(T));
+                CastlePatchedInterceptorRegistry.UnMockStatics(_staticType);
             }
         }
 
-        public static StaticProxy<T> ForStatic<T>()
+        public static StaticProxy ForStatic<T>()
         {
-            return For<StaticProxy<T>>();
+            return ForStatic(typeof(T));
         }
-    }
+
+        public static StaticProxy ForStatic(Type staticType)
+        {
+            return For<StaticProxy>(staticType);
+        }
+     }
 }

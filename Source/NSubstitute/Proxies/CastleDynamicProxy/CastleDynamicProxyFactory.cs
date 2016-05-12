@@ -44,15 +44,12 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
                 return _proxyGenerator.CreateInterfaceProxyWithoutTarget(typeToProxy, additionalInterfaces, proxyGenerationOptions, interceptor);
             }
 
-            if (typeToProxy.IsGenericType && typeToProxy.GetGenericTypeDefinition() == typeof(Substitute.StaticProxy<>))
+            if (typeToProxy == typeof(Substitute.StaticProxy))
             {
                 if (additionalInterfaces.Any())
                     throw new SubstituteException("Can not substitute interfaces as static");
-                if (constructorArguments.Any())
-                    throw new SubstituteException("Constructor arguments make no sense for statics");
 
-                // extract the T from StaticProxy<T>
-                var actualType = typeToProxy.GetGenericArguments()[0];
+                var actualType = (Type)constructorArguments[0];
 
                 // find our hook and set it
                 var staticMocker = CastlePatchedInterceptorRegistry.GetStaticMocker(actualType);
@@ -61,7 +58,7 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
                 staticMocker(interceptor);
 
                 // callers will need an actual object in order to chain further arranging
-                return Activator.CreateInstance(typeToProxy);
+                return new Substitute.StaticProxy(actualType);
             }
 
             var instanceMocker = CastlePatchedInterceptorRegistry.GetInstanceMocker(typeToProxy);
