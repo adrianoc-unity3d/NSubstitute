@@ -1,0 +1,11 @@
+[version]
+repoconfig=1
+
+[format]
+path-include = ^Source/Weaving/         # limit to our own new stuff and leave the rest alone
+path-ignore = <<EOT
+(^|/)(
+     Unity\.Cecil\.Visitor(\.Tests)?    # remove once external library is formatted
+    |_Migrated                          # remove once all migrated code integrated
+)(/|$)
+EOT
