@@ -1,18 +1,18 @@
-﻿using CallSitePatcher.Library;
+﻿using System;
 using Mono.Cecil;
 using Mono.Collections.Generic;
 
-namespace CallSitePatcher
+namespace NSubstitute.Weaving
 {
-    public class Patcher
+    public class CallSiteWeaver
     {
-        private Resolver _resolver;
+        Resolver m_Resolver;
 
-        public void Patch(AssemblyDefinition fakeAssembly, AssemblyDefinition assembly, string targetFile)
+        public void Weave(AssemblyDefinition fakeAssembly, AssemblyDefinition assembly, string targetFile)
         {
 //            var fakeAssembly = AssemblyDefinition.ReadAssembly(fakeAssemblyPath);
 //            var assembly = AssemblyDefinition.ReadAssembly(assemblyPath);
-            _resolver = new Resolver(assembly, fakeAssembly);
+            m_Resolver = new Resolver(assembly, fakeAssembly);
 
             foreach (var module in assembly.Modules)
             {
@@ -34,11 +34,11 @@ namespace CallSitePatcher
                 UpdateTypes(type.NestedTypes, module);
 
                 for (var i = 0; i < type.Interfaces.Count; ++i)
-                    type.Interfaces[i] = _resolver.Resolve(module, type.Interfaces[i]);
+                    type.Interfaces[i] = m_Resolver.Resolve(module, type.Interfaces[i]);
             }
         }
 
-        private void UpdateEvents(Collection<EventDefinition> events, ModuleDefinition module)
+        void UpdateEvents(Collection<EventDefinition> events, ModuleDefinition module)
         {
             foreach (var ev in events)
             {
@@ -53,13 +53,13 @@ namespace CallSitePatcher
             }
         }
 
-        private void UpdateFields(TypeDefinition type, ModuleDefinition module)
+        void UpdateFields(TypeDefinition type, ModuleDefinition module)
         {
             foreach (var field in type.Fields)
-                field.FieldType = _resolver.Resolve(module, field.FieldType);
+                field.FieldType = m_Resolver.Resolve(module, field.FieldType);
         }
 
-        private void UpdateProperties(TypeDefinition type, ModuleDefinition module)
+        void UpdateProperties(TypeDefinition type, ModuleDefinition module)
         {
             foreach (var property in type.Properties)
             {
@@ -70,7 +70,7 @@ namespace CallSitePatcher
                 if (property.HasOtherMethods)
                     foreach (var m in property.OtherMethods)
                         UpdateMethod(module, m);
-                property.PropertyType = _resolver.Resolve(module, property.PropertyType);
+                property.PropertyType = m_Resolver.Resolve(module, property.PropertyType);
             }
         }
 
@@ -80,9 +80,9 @@ namespace CallSitePatcher
                 UpdateMethod(module, method);
         }
 
-        private void UpdateMethod(ModuleDefinition module, MethodDefinition method)
+        void UpdateMethod(ModuleDefinition module, MethodDefinition method)
         {
-            _resolver.Resolve(module, method);
+            m_Resolver.Resolve(module, method);
         }
     }
 }

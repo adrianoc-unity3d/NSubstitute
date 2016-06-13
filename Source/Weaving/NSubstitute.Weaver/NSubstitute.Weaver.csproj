@@ -49,9 +49,15 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PrologInjectorVisitor.cs" />
+    <Compile Include="MscorlibWeaver\CallSiteWeaver\CallSiteWeaver.cs" />
+    <Compile Include="MscorlibWeaver\CallSiteWeaver\Resolver.cs" />
+    <Compile Include="CecilExtensions.cs" />
+    <Compile Include="MscorlibWeaver\MscorlibWrapper\Copier.cs" />
+    <Compile Include="MscorlibWeaver\MscorlibWrapper\ProcessTypeResolver.cs" />
+    <Compile Include="MscorlibWeaver\MscorlibWrapper\Wrapper.cs" />
+    <Compile Include="MockWeaver\MockInjectorVisitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PrologPatcher.cs" />
+    <Compile Include="MockWeaver\MockWeaver.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -62,6 +68,7 @@
       <Name>Unity.Cecil.Visitor</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -1,21 +1,18 @@
 using System;
-using System.IO;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
-using NSubstitute.Proxies.CastleDynamicProxy;
 using Unity.Cecil.Visitor;
-using Unity.Testing.PrologPatcher;
 
-namespace WrapMscorlib2
+namespace NSubstitute.Weaving
 {
-    public class Copier
+    class Copier
     {
-        private const string PrefixName = "Fake.";
-        private const string FakeForward = "__fake_forward";
-        private static MethodDefinition _fakeForwardConstructor;
-        private static MethodDefinition _fakeCloneMethod;
+        const string k_PrefixName = "Fake.";
+        const string k_FakeForward = "__fake_forward";
+        static MethodDefinition s_FakeForwardConstructor;
+        static MethodDefinition s_FakeCloneMethod;
 
         public static void Copy(AssemblyDefinition source, AssemblyDefinition target, AssemblyDefinition nsubstitute, string[] typesToCopy)
         {
@@ -31,15 +28,15 @@ namespace WrapMscorlib2
 
             foreach (var type in typeDefinitions)
             {
-                var typeDefinition = target.MainModule.Types.Single(t => t.FullName == PrefixName + type.FullName);
+                var typeDefinition = target.MainModule.Types.Single(t => t.FullName == k_PrefixName + type.FullName);
                 CopyTypeMembers(target, type, typeDefinition);
             }
 
-            var visitor = new PrologInjectorVisitor(nsubstitute, target.MainModule);
+            var visitor = new MockInjectorVisitor(nsubstitute, target.MainModule);
             target.Accept(visitor);
         }
 
-        private static void CopyTypeMembers(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
+        static void CopyTypeMembers(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
         {
             CopyCustomAttributes(target, type, typeDefinition);
 
@@ -49,7 +46,7 @@ namespace WrapMscorlib2
             CopyProperties(target, type, typeDefinition);
         }
 
-        private static void CopyProperties(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
+        static void CopyProperties(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
         {
             foreach (var property in type.Properties)
             {
@@ -66,7 +63,7 @@ namespace WrapMscorlib2
             }
         }
 
-        private static MethodDefinition ResolveMethod(TypeDefinition typeDefinition, MethodDefinition originalMethod)
+        static MethodDefinition ResolveMethod(TypeDefinition typeDefinition, MethodDefinition originalMethod)
         {
             var candidates = typeDefinition.Methods.Where(m => m.Name == originalMethod.Name).ToList();
             if (candidates.Count == 1)
@@ -75,33 +72,33 @@ namespace WrapMscorlib2
             throw new NotImplementedException();
         }
 
-        private static void CreateFakeFieldForward(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
+        static void CreateFakeFieldForward(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
         {
-            var field = new FieldDefinition(FakeForward, FieldAttributes.Assembly, target.MainModule.Import(type));
+            var field = new FieldDefinition(k_FakeForward, FieldAttributes.Assembly, target.MainModule.Import(type));
             typeDefinition.Fields.Add(field);
         }
 
-        private static void CopyType(AssemblyDefinition target, TypeDefinition type)
+        static void CopyType(AssemblyDefinition target, TypeDefinition type)
         {
             // TODO: Support inheritance hierarchies when copying types over (e.g. fake StreamWriter should inherit from fake TextWriter)
 
             var baseTypeRef = type.BaseType != null ? target.MainModule.Import(type.BaseType) : null;
-            var typeDefinition = new TypeDefinition(PrefixName + type.Namespace, type.Name, type.Attributes & ~TypeAttributes.HasSecurity, baseTypeRef);
+            var typeDefinition = new TypeDefinition(k_PrefixName + type.Namespace, type.Name, type.Attributes & ~TypeAttributes.HasSecurity, baseTypeRef);
 
             target.MainModule.Types.Add(typeDefinition);
         }
 
-        private static void CopyMethods(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
+        static void CopyMethods(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
         {
             if (!type.IsAbstract)
             {
-                _fakeForwardConstructor = CreateFakeForwardConstructor(target, type, typeDefinition);
-                _fakeCloneMethod = null;
+                s_FakeForwardConstructor = CreateFakeForwardConstructor(target, type, typeDefinition);
+                s_FakeCloneMethod = null;
             }
             else
             {
-                _fakeForwardConstructor = null;
-                _fakeCloneMethod = CreateFakeCloneMethod(target, type, typeDefinition);
+                s_FakeForwardConstructor = null;
+                s_FakeCloneMethod = CreateFakeCloneMethod(target, type, typeDefinition);
             }
 
             foreach (var method in type.Methods)
@@ -110,7 +107,7 @@ namespace WrapMscorlib2
                     continue;
 
                 //var fakeField = CreateFakeField(target, type, typeDefinition, method);
-                FieldDefinition fakeField = null;
+                //FieldDefinition fakeField = null;
 
                 var methodDefinition = new MethodDefinition(method.Name, method.Attributes & ~MethodAttributes.HasSecurity, ResolveType(target, typeDefinition, method.ReturnType));
                 foreach (var parameter in method.Parameters)
@@ -121,7 +118,7 @@ namespace WrapMscorlib2
                 }
 
                 if (method.Name == ".ctor")
-                { 
+                {
                     FillConstructor(target, type, method, typeDefinition, methodDefinition);
                     typeDefinition.Methods.Add(methodDefinition);
                 }
@@ -135,7 +132,7 @@ namespace WrapMscorlib2
             }
         }
 
-        private static MethodDefinition CreateMainImplementationForwardingMethod(AssemblyDefinition target, MethodDefinition method, TypeDefinition typeDefinition, MethodDefinition methodDefinition)
+        static MethodDefinition CreateMainImplementationForwardingMethod(AssemblyDefinition target, MethodDefinition method, TypeDefinition typeDefinition, MethodDefinition methodDefinition)
         {
             var implMethod = new MethodDefinition(method.Name/* + "__Impl"*/, method.Attributes & ~MethodAttributes.HasSecurity, methodDefinition.ReturnType);
             typeDefinition.Methods.Add(implMethod);
@@ -146,7 +143,7 @@ namespace WrapMscorlib2
 
             implMethod.Body = new MethodBody(implMethod);
 
-            if (implMethod.ReturnType.FullName == typeDefinition.FullName && _fakeForwardConstructor == null)
+            if (implMethod.ReturnType.FullName == typeDefinition.FullName && s_FakeForwardConstructor == null)
                 implMethod.Body.Instructions.Add(Instruction.Create(OpCodes.Ldarg_0));
 
             if (!method.IsStatic)
@@ -154,7 +151,7 @@ namespace WrapMscorlib2
                 implMethod.Body.Instructions.Add(Instruction.Create(OpCodes.Ldarg_0)); // this
                 if (typeDefinition.IsValueType)
                     implMethod.Body.Instructions.Add(Instruction.Create(OpCodes.Ldflda,
-                        typeDefinition.Fields.Single(f => f.Name == FakeForward))); // this.__fake_forward
+                        typeDefinition.Fields.Single(f => f.Name == k_FakeForward))); // this.__fake_forward
                 else
                     implMethod.Body.Instructions.Add(Instruction.Create(OpCodes.Ldfld,
                         FakeForwardField(typeDefinition)));
@@ -172,9 +169,9 @@ namespace WrapMscorlib2
                 implMethod.Body.Instructions.Add(Instruction.Create(OpCodes.Call, target.MainModule.Import(method))); // this.__fake__forward.<Method>(arguments)
             if (implMethod.ReturnType.FullName == typeDefinition.FullName)
             {
-                implMethod.Body.Instructions.Add(_fakeForwardConstructor != null
-                    ? Instruction.Create(OpCodes.Newobj, _fakeForwardConstructor)
-                    : Instruction.Create(OpCodes.Callvirt, _fakeCloneMethod));
+                implMethod.Body.Instructions.Add(s_FakeForwardConstructor != null
+                    ? Instruction.Create(OpCodes.Newobj, s_FakeForwardConstructor)
+                    : Instruction.Create(OpCodes.Callvirt, s_FakeCloneMethod));
                 implMethod.Body.Instructions.Add(Instruction.Create(OpCodes.Ret));
                 return implMethod;
             }
@@ -190,7 +187,7 @@ namespace WrapMscorlib2
         // construct a new instance of the fake wrapped around the new type, but since we don't have access to enough information at the call-site,
         // we introduce a new clone method explicitly for this purpose.
         // For a typical use case, see TextWriter.Synchronized.
-        private static MethodDefinition CreateFakeCloneMethod(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
+        static MethodDefinition CreateFakeCloneMethod(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
         {
             var methodDefinition = new MethodDefinition("__FakeClone", MethodAttributes.Family | MethodAttributes.Virtual, typeDefinition);
             methodDefinition.Parameters.Add(new ParameterDefinition("fake", ParameterAttributes.None, target.MainModule.Import(type)));
@@ -203,7 +200,7 @@ namespace WrapMscorlib2
             return methodDefinition;
         }
 
-        private static FieldDefinition CreateFakeField(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition, MethodDefinition method)
+        static FieldDefinition CreateFakeField(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition, MethodDefinition method)
         {
             if (method.Name == ".ctor")
                 return null;
@@ -234,7 +231,7 @@ namespace WrapMscorlib2
                     method.Parameters.Select<ParameterDefinition, TypeReference>(p => ResolveType(target, typeDefinition, p.ParameterType))
                         .Concat(new[] {ResolveType(target, typeDefinition, method.ReturnType)})
                         .ToArray());
-            
+
             var attributes = FieldAttributes.Public;
             if (method.IsStatic)
                 attributes |= FieldAttributes.Static;
@@ -248,7 +245,7 @@ namespace WrapMscorlib2
             return fieldDefinition;
         }
 
-        private static MethodDefinition CreateFakeForwardConstructor(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
+        static MethodDefinition CreateFakeForwardConstructor(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
         {
             var method = new MethodDefinition(".ctor", MethodAttributes.Family | MethodAttributes.HideBySig | MethodAttributes.RTSpecialName | MethodAttributes.SpecialName, target.MainModule.Import(type.Module.GetType("System.Void")));
             var parameterDefinition = new ParameterDefinition("forward", ParameterAttributes.In, target.MainModule.Import(type));
@@ -265,12 +262,12 @@ namespace WrapMscorlib2
             return method;
         }
 
-        private static FieldDefinition FakeForwardField(TypeDefinition typeDefinition)
+        static FieldDefinition FakeForwardField(TypeDefinition typeDefinition)
         {
-            return typeDefinition.Fields.Single(f => f.Name == FakeForward);
+            return typeDefinition.Fields.Single(f => f.Name == k_FakeForward);
         }
 
-        private static void CreateMainFakeMethodContents(AssemblyDefinition target, TypeDefinition type, MethodDefinition method, TypeDefinition typeDefinition, MethodDefinition methodDefinition, FieldDefinition fakeField, MethodDefinition implMethod)
+        static void CreateMainFakeMethodContents(AssemblyDefinition target, TypeDefinition type, MethodDefinition method, TypeDefinition typeDefinition, MethodDefinition methodDefinition, FieldDefinition fakeField, MethodDefinition implMethod)
         {
             methodDefinition.Body = new MethodBody(methodDefinition);
 
@@ -294,7 +291,7 @@ namespace WrapMscorlib2
             methodDefinition.Body.Instructions.Add(ret);
         }
 
-        private static void AddFakeFieldCallback(AssemblyDefinition target, MethodDefinition method,
+        static void AddFakeFieldCallback(AssemblyDefinition target, MethodDefinition method,
             MethodDefinition methodDefinition, FieldDefinition fakeField, Instruction nop, Instruction ret)
         {
             if (method.IsStatic)
@@ -327,7 +324,7 @@ namespace WrapMscorlib2
             }
         }
 
-        private static MethodReference ResolveGenericInvoke(AssemblyDefinition target, FieldDefinition fakeField)
+        static MethodReference ResolveGenericInvoke(AssemblyDefinition target, FieldDefinition fakeField)
         {
             if (!fakeField.FieldType.IsGenericInstance)
                 return target.MainModule.Import(fakeField.FieldType.Resolve().Methods.Single(m => m.Name == "Invoke"));
@@ -352,7 +349,7 @@ namespace WrapMscorlib2
             return realInvoke;
         }
 
-        private static void FillConstructor(AssemblyDefinition target, TypeDefinition type, MethodDefinition method, TypeDefinition typeDefinition, MethodDefinition methodDefinition)
+        static void FillConstructor(AssemblyDefinition target, TypeDefinition type, MethodDefinition method, TypeDefinition typeDefinition, MethodDefinition methodDefinition)
         {
             methodDefinition.Body = new MethodBody(methodDefinition);
 
@@ -364,11 +361,11 @@ namespace WrapMscorlib2
                 methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Ldarg, param));
 
             methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Newobj, target.MainModule.Import(method)));
-            methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Stfld, typeDefinition.Fields.Single(f => f.Name == FakeForward)));
+            methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Stfld, typeDefinition.Fields.Single(f => f.Name == k_FakeForward)));
             methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Ret));
         }
 
-        private static void AddBaseTypeCtorCall(AssemblyDefinition target, TypeDefinition typeDefinition,
+        static void AddBaseTypeCtorCall(AssemblyDefinition target, TypeDefinition typeDefinition,
             MethodDefinition methodDefinition)
         {
             if (typeDefinition.BaseType != null && !typeDefinition.IsValueType)
@@ -382,17 +379,17 @@ namespace WrapMscorlib2
             }
         }
 
-        private static TypeReference ResolveType(AssemblyDefinition target, TypeDefinition typeDefinition, TypeReference type)
+        static TypeReference ResolveType(AssemblyDefinition target, TypeDefinition typeDefinition, TypeReference type)
         {
             //var typeDef = target.MainModule.Types.FirstOrDefault(t => t.FullName == prefixName + type.FullName);
-            var typeDef = PrefixName + type.FullName == typeDefinition.FullName;
+            var typeDef = k_PrefixName + type.FullName == typeDefinition.FullName;
             if (typeDef)
                 return typeDefinition;
 
             return target.MainModule.Import(type);
         }
 
-        private static void CopyCustomAttributes(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
+        static void CopyCustomAttributes(AssemblyDefinition target, TypeDefinition type, TypeDefinition typeDefinition)
         {
             foreach (var customAttribute in type.CustomAttributes)
             {

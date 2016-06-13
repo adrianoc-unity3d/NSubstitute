@@ -1,9 +1,9 @@
 using System;
 using Mono.Cecil;
 
-namespace CallSitePatcher.Tests
+namespace NSubstitute.Weaving.Tests
 {
-    internal class ResolverTestBase
+    class ResolverTestBase
     {
         protected static AssemblyDefinition CreateAssembly(string name)
         {

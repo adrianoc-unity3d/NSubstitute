@@ -12,12 +12,11 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
-using NSubstitute.Weaving;
 
 namespace NSubstitute.Weaving.Tests
 {
     [TestFixture]
-    public class PrologPatcherTests
+    public class MockWeaverTests
     {
         [Test]
         public void ICalls()
@@ -234,7 +233,7 @@ public class C { public void M() { try { throw new System.Exception(""Hello worl
 
             using (var assembly = File.OpenRead(testAssemblyPath))
             {
-                PrologPatcher.InjectFakes(assembly, hookedTestAssemblyPath, Assembly.GetExecutingAssembly().Location);
+                MockWeaver.InjectFakes(assembly, hookedTestAssemblyPath, Assembly.GetExecutingAssembly().Location);
 
                 Console.WriteLine("Original assembly: {0}", testAssemblyPath);
                 Console.WriteLine("Patched assembly: {0}", hookedTestAssemblyPath);
@@ -284,7 +283,7 @@ public class C { public void M() { try { throw new System.Exception(""Hello worl
 
             using (var assembly = File.OpenRead(testAssemblyPath))
             {
-                PrologPatcher.InjectFakes(assembly, hookedTestAssemblyPath, Assembly.GetExecutingAssembly().Location);
+                MockWeaver.InjectFakes(assembly, hookedTestAssemblyPath, Assembly.GetExecutingAssembly().Location);
 
                 Console.WriteLine("Original assembly: {0}", testAssemblyPath);
                 Console.WriteLine("Patched assembly: {0}", hookedTestAssemblyPath);

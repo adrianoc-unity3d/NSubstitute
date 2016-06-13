@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using Mono.Cecil;
 
-namespace WrapMscorlib2
+namespace NSubstitute.Weaving
 {
     public static class CecilExtensions
     {
@@ -16,6 +16,5 @@ namespace WrapMscorlib2
 
             return false;
         }
-
     }
 }

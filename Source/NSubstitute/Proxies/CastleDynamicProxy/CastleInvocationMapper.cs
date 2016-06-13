@@ -12,7 +12,7 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
         {
             Func<object> baseMethod = null;
             if (castleInvocation.InvocationTarget != null &&
-                /*castleInvocation.MethodInvocationTarget.IsVirtual &&*/
+                /*castleInvocation.MethodInvocationTarget.IsVirtual &&*/        // $$$ HACKED - this was disabled to permit NSubstitute to patch concretes and statics - do it better
                 !castleInvocation.MethodInvocationTarget.IsAbstract /*&&
                 !castleInvocation.MethodInvocationTarget.IsFinal*/)
             {

@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Linq;
-using CallSitePatcher.Library;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
 using NUnit.Framework;
 
-namespace CallSitePatcher.Tests
+namespace NSubstitute.Weaving.Tests
 {
     [TestFixture]
     class ResolverTestForTypes : ResolverTestBase
@@ -28,7 +27,7 @@ namespace CallSitePatcher.Tests
             var fake = CreateFakeAssembly();
             var datetime = fake.MainModule.Types.Single(t => t.Name == "DateTime");
             var realDateTime = target.MainModule.Import(typeof(DateTime));
-            
+
             var resolver = new Resolver(target, fake);
             Assert.That(resolver.Resolve(target.MainModule, realDateTime).FullName, Is.EqualTo(datetime.FullName));
         }

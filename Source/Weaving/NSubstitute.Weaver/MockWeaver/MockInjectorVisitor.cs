@@ -8,14 +8,14 @@ using Unity.Cecil.Visitor;
 
 namespace NSubstitute.Weaving
 {
-    class PrologInjectorVisitor : Visitor
+    class MockInjectorVisitor : Visitor
     {
         readonly MethodDefinition m_HookForInstance;
         readonly Stack<List<MethodDefinition>> m_InjectedMethods = new Stack<List<MethodDefinition>>();
         readonly IList<MethodDefinition> m_Processed = new List<MethodDefinition>();
         readonly TypeReference m_CompilerGeneratedAttrType;
 
-        public PrologInjectorVisitor(AssemblyDefinition fakeFramework, ModuleDefinition module)
+        public MockInjectorVisitor(AssemblyDefinition fakeFramework, ModuleDefinition module)
         {
             m_HookForInstance = fakeFramework.MainModule.Types.Single(t => t.Name == "CastlePatchedInterceptorRegistry").Methods.Single(m => m.Name == "CallMockMethodOrImpl");
             m_CompilerGeneratedAttrType = module.Import(typeof(CompilerGeneratedAttribute));

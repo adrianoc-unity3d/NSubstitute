@@ -5,7 +5,7 @@ using Unity.Cecil.Visitor;
 
 namespace NSubstitute.Weaving
 {
-    public static class PrologPatcher
+    public static class MockWeaver
     {
         public static void InjectFakes(string assemblyToPatch, string registryAssemblyPath)
         {
@@ -24,7 +24,7 @@ namespace NSubstitute.Weaving
         {
             var assembly = AssemblyDefinition.ReadAssembly(intoAssembly);
 
-            assembly.Accept(new PrologInjectorVisitor(AssemblyDefinition.ReadAssembly(mockRegistryAssemblyPath), assembly.MainModule));
+            assembly.Accept(new MockInjectorVisitor(AssemblyDefinition.ReadAssembly(mockRegistryAssemblyPath), assembly.MainModule));
 
             assembly.Write(targetAssemblyPath, new WriterParameters { WriteSymbols = true});
         }

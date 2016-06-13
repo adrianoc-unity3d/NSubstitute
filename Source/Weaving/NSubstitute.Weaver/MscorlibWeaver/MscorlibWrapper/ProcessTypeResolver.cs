@@ -2,18 +2,18 @@
 using System.Linq;
 using Mono.Cecil;
 
-namespace WrapMscorlib2
+namespace NSubstitute.Weaving
 {
-    public class ProcessTypeResolver
+    class ProcessTypeResolver
     {
-        private readonly AssemblyDefinition _assembly;
+        readonly AssemblyDefinition m_Assembly;
 
         public ProcessTypeResolver(AssemblyDefinition assembly)
         {
-            _assembly = assembly;
+            m_Assembly = assembly;
         }
 
-        int InheritanceChainLength(TypeReference type)
+        static int InheritanceChainLength(TypeReference type)
         {
             var baseType = type.Resolve().BaseType;
             if (baseType == null)
@@ -25,13 +25,13 @@ namespace WrapMscorlib2
         {
             var toCopy = new HashSet<string>(typesToCopy);
 
-            var types = new List<TypeDefinition>(_assembly.MainModule.Types.Where(t => toCopy.Contains(t.FullName)));
-            types.Sort(((lhs, rhs) =>
+            var types = new List<TypeDefinition>(m_Assembly.MainModule.Types.Where(t => toCopy.Contains(t.FullName)));
+            types.Sort((lhs, rhs) =>
             {
                 var lhsChain = InheritanceChainLength(lhs);
                 var rhsChain = InheritanceChainLength(rhs);
                 return lhsChain.CompareTo(rhsChain);
-            }));
+            });
             return types;
         }
     }

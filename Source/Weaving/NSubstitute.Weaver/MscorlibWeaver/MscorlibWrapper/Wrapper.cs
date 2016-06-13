@@ -1,10 +1,10 @@
 ﻿using Mono.Cecil;
 
-namespace WrapMscorlib2
+namespace NSubstitute.Weaving
 {
     public static class Wrapper
     {
-        static string[] typesToCopy = new[] { "System.Text.StringBuilder", "System.DateTime", "System.IO.File", "System.IO.Path", "System.Console", "System.Threading.Thread" };
+        static string[] s_TypesToCopy = { "System.Text.StringBuilder", "System.DateTime", "System.IO.File", "System.IO.Path", "System.Console", "System.Threading.Thread" };
 
         public static AssemblyDefinition Wrap(string mscorlibPath, string nsubstitutePath)
         {
@@ -13,8 +13,8 @@ namespace WrapMscorlib2
                 AssemblyDefinition.CreateAssembly(new AssemblyNameDefinition("mscorlib.fake", mscorlib.Name.Version),
                     mscorlib.MainModule.Name, mscorlib.MainModule.Kind);
             var nsubstitute = AssemblyDefinition.ReadAssembly(nsubstitutePath);
-           
-            Copier.Copy(mscorlib, fakelib, nsubstitute, typesToCopy);
+
+            Copier.Copy(mscorlib, fakelib, nsubstitute, s_TypesToCopy);
             return fakelib;
         }
     }

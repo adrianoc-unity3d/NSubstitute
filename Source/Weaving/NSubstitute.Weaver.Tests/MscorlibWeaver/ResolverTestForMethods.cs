@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Linq;
-using CallSitePatcher.Library;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
 using NUnit.Framework;
 
-namespace CallSitePatcher.Tests
+namespace NSubstitute.Weaving.Tests
 {
     [TestFixture]
     class ResolverTestForMethods : ResolverTestBase
@@ -333,13 +332,13 @@ namespace CallSitePatcher.Tests
             Assert.That(method.Body.Instructions[3].Operand.ToString(), Is.EqualTo("R0 Foo.Type1::Method2<Fake.System.DateTime>(R0)"));
         }
 
-        void AddGenericMethodParameters(MethodDefinition method, int arguments)
+        static void AddGenericMethodParameters(MethodDefinition method, int arguments)
         {
             for (var i = 0; i < arguments; ++i)
                 method.GenericParameters.Add(new GenericParameter("R"+i, method));
         }
 
-        MethodDefinition CreateMethodDefinition(TypeDefinition type, string name, TypeReference returnType,
+        static MethodDefinition CreateMethodDefinition(TypeDefinition type, string name, TypeReference returnType,
             params TypeReference[] arguments)
         {
             var md = new MethodDefinition(name, MethodAttributes.Public, returnType);

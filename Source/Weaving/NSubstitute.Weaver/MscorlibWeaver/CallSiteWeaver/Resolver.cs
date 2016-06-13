@@ -4,22 +4,22 @@ using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
 
-namespace CallSitePatcher.Library
+namespace NSubstitute.Weaving
 {
-    public class Resolver
+    class Resolver
     {
-        private readonly AssemblyDefinition _target;
-        private readonly AssemblyDefinition _fakeAssembly;
-        private Dictionary<string, TypeDefinition> _map;
+        readonly AssemblyDefinition m_Target;
+        readonly AssemblyDefinition m_FakeAssembly;
+        Dictionary<string, TypeDefinition> m_Map;
 
         public Resolver(AssemblyDefinition target, AssemblyDefinition fakeAssembly)
         {
-            _target = target;
-            _fakeAssembly = fakeAssembly;
-            _map = _fakeAssembly.MainModule.Types.ToDictionary(t => t.FullName.Substring("Fake.".Length), t => t);
+            m_Target = target;
+            m_FakeAssembly = fakeAssembly;
+            m_Map = m_FakeAssembly.MainModule.Types.ToDictionary(t => t.FullName.Substring("Fake.".Length), t => t);
         }
 
-        MethodDefinition TryResolve(MethodReference reference)
+        static MethodDefinition TryResolve(MethodReference reference)
         {
             try
             {
@@ -34,7 +34,7 @@ namespace CallSitePatcher.Library
 
         public MethodReference Resolve(ModuleDefinition module, MethodReference reference, bool resolveBody = true)
         {
-            if (reference.DeclaringType.Scope.Name == _fakeAssembly.Name.Name)
+            if (reference.DeclaringType.Scope.Name == m_FakeAssembly.Name.Name)
                 return reference;
 
             var def = TryResolve(reference);
@@ -50,7 +50,7 @@ namespace CallSitePatcher.Library
                 foreach (var instruction in def.Body.Instructions)
                 {
                     var methodReference = instruction.Operand as MethodReference;
-                    if (methodReference != null && methodReference.Module == _target.MainModule)
+                    if (methodReference != null && methodReference.Module == m_Target.MainModule)
                         if (methodReference != reference)
                             instruction.Operand = Resolve(module, methodReference, false);
 
@@ -72,10 +72,8 @@ namespace CallSitePatcher.Library
             {
                 for (var i = 0; i < genericInstanceMethod.GenericArguments.Count; ++i)
                 {
-                    var genericArgument = Resolve(module,
-                        genericInstanceMethod.GenericArguments[i]);
-                    if (genericArgument != genericInstanceMethod.GenericArguments[i])
-                        genericInstanceMethod.GenericArguments[i] = genericArgument;
+                    var genericArgument = Resolve(module, genericInstanceMethod.GenericArguments[i]);
+                    genericInstanceMethod.GenericArguments[i] = genericArgument;
                 }
             }
 
@@ -94,7 +92,7 @@ namespace CallSitePatcher.Library
             return module.Import(reference);
         }
 
-        MethodReference Recreate(MethodReference reference, TypeReference declaringType)
+        static MethodReference Recreate(MethodReference reference, TypeReference declaringType)
         {
             try
             {
@@ -129,7 +127,7 @@ namespace CallSitePatcher.Library
             }
 
             TypeDefinition orig;
-            if (!_map.TryGetValue(type.FullName, out orig))
+            if (!m_Map.TryGetValue(type.FullName, out orig))
                 return module.Import(type);
 
             return module.Import(orig);
