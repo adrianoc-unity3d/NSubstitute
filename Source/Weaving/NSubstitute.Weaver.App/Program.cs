@@ -41,4 +41,3 @@ namespace NSubstitute.Weaver.App
         }
     }
 }
-

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Mono.Cecil;
 using Mono.Collections.Generic;
 
@@ -19,7 +19,7 @@ namespace NSubstitute.Weaving
                 UpdateTypes(module.Types, module);
             }
 
-            if(!string.IsNullOrEmpty(targetFile))
+            if (!string.IsNullOrEmpty(targetFile))
                 assembly.Write(targetFile);
         }
 

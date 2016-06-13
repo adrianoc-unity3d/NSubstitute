@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
@@ -66,7 +66,7 @@ namespace NSubstitute.Weaving
                         variable.VariableType = typeReference;
                 }
             }
-            skipbody:
+        skipbody:
             var genericInstanceMethod = reference as GenericInstanceMethod;
             if (genericInstanceMethod != null)
             {
@@ -104,7 +104,7 @@ namespace NSubstitute.Weaving
             }
             catch (InvalidOperationException)
             {
-                var instance = (GenericInstanceMethod) reference;
+                var instance = (GenericInstanceMethod)reference;
                 var newReference = new GenericInstanceMethod(new MethodReference(instance.Name, instance.ReturnType, declaringType));
                 instance.GenericArguments.ToList().ForEach(arg => newReference.GenericArguments.Add(arg));
                 instance.GenericParameters.ToList().ForEach(arg => newReference.GenericParameters.Add(arg));
@@ -118,7 +118,7 @@ namespace NSubstitute.Weaving
             if (type.IsGenericInstance)
             {
                 var baseType = type.Resolve();
-                var instance = (GenericInstanceType) type;
+                var instance = (GenericInstanceType)type;
                 var resolvedBaseType = Resolve(module, baseType);
                 var resolvedInstance =
                     resolvedBaseType.MakeGenericInstanceType(

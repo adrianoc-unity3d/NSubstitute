@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -335,7 +335,7 @@ namespace NSubstitute.Weaving.Tests
         static void AddGenericMethodParameters(MethodDefinition method, int arguments)
         {
             for (var i = 0; i < arguments; ++i)
-                method.GenericParameters.Add(new GenericParameter("R"+i, method));
+                method.GenericParameters.Add(new GenericParameter("R" + i, method));
         }
 
         static MethodDefinition CreateMethodDefinition(TypeDefinition type, string name, TypeReference returnType,
@@ -343,7 +343,7 @@ namespace NSubstitute.Weaving.Tests
         {
             var md = new MethodDefinition(name, MethodAttributes.Public, returnType);
             for (var i = 0; i < arguments.Length; ++i)
-                md.Parameters.Add(new ParameterDefinition("p"+i, ParameterAttributes.None, arguments[i]));
+                md.Parameters.Add(new ParameterDefinition("p" + i, ParameterAttributes.None, arguments[i]));
             type.Methods.Add(md);
             return md;
         }

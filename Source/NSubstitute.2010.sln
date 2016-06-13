@@ -18,6 +18,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Weaving", "Weaving", "{E0848B61-5C73-433D-9CE2-AE1E79C4DF5B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NSubstitute.Weaver", "Weaving\NSubstitute.Weaver\NSubstitute.Weaver.csproj", "{1F4E8339-BC3E-4CAF-9F18-971A30B35A5E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CC6C16CC-053D-4A67-B48F-7FF4304F2896} = {CC6C16CC-053D-4A67-B48F-7FF4304F2896}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NSubstitute.Weaver.App", "Weaving\NSubstitute.Weaver.App\NSubstitute.Weaver.App.csproj", "{CF6C832B-22FB-47CB-8F75-456F2B966FC9}"
 EndProject

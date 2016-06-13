@@ -134,7 +134,7 @@ namespace NSubstitute.Weaving
 
         static MethodDefinition CreateMainImplementationForwardingMethod(AssemblyDefinition target, MethodDefinition method, TypeDefinition typeDefinition, MethodDefinition methodDefinition)
         {
-            var implMethod = new MethodDefinition(method.Name/* + "__Impl"*/, method.Attributes & ~MethodAttributes.HasSecurity, methodDefinition.ReturnType);
+            var implMethod = new MethodDefinition(method.Name /* + "__Impl"*/, method.Attributes & ~MethodAttributes.HasSecurity, methodDefinition.ReturnType);
             typeDefinition.Methods.Add(implMethod);
 
             #region Check and call local delegate field
@@ -255,7 +255,7 @@ namespace NSubstitute.Weaving
             AddBaseTypeCtorCall(target, typeDefinition, method);
             method.Body.Instructions.Add(Instruction.Create(OpCodes.Ldarg_0)); // this
             method.Body.Instructions.Add(Instruction.Create(OpCodes.Ldarg, parameterDefinition)); // forward
-            method.Body.Instructions.Add(Instruction.Create(OpCodes.Stfld, (FieldReference) FakeForwardField(typeDefinition))); // this.__fake_forward = forward
+            method.Body.Instructions.Add(Instruction.Create(OpCodes.Stfld, (FieldReference)FakeForwardField(typeDefinition))); // this.__fake_forward = forward
             method.Body.Instructions.Add(Instruction.Create(OpCodes.Ret));
 
             typeDefinition.Methods.Add(method);
@@ -304,7 +304,7 @@ namespace NSubstitute.Weaving
                 foreach (var param in methodDefinition.Parameters)
                     methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Ldarg, param));
                 methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Callvirt,
-                    (MethodReference) ResolveGenericInvoke(target, fakeField)));
+                        (MethodReference)ResolveGenericInvoke(target, fakeField)));
                 methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Br_S, ret));
             }
             else
@@ -319,7 +319,7 @@ namespace NSubstitute.Weaving
                 foreach (var param in methodDefinition.Parameters)
                     methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Ldarg, param));
                 methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Callvirt,
-                    (MethodReference) ResolveGenericInvoke(target, fakeField)));
+                        (MethodReference)ResolveGenericInvoke(target, fakeField)));
                 methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Br_S, ret));
             }
         }
