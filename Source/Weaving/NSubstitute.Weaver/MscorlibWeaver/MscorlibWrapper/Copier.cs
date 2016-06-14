@@ -236,7 +236,7 @@ namespace NSubstitute.Weaving
             if (method.IsStatic)
                 attributes |= FieldAttributes.Static;
 
-            var disambiguator = string.Join("_", method.Parameters.Select(p => p.ParameterType.Name));
+            var disambiguator = string.Join("_", method.Parameters.Select(p => p.ParameterType.Name).ToArray());
             var fieldName = method.Name + "Fake" + (disambiguator == "" ? "" : "_" + disambiguator);
             if (method.IsStatic)
                 fieldName += "_static";

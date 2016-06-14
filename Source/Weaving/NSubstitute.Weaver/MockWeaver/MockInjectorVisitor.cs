@@ -186,7 +186,7 @@ namespace NSubstitute.Weaving
                 il.Append(il.Create(OpCodes.Stelem_Ref));
             }
 
-            var refOrOutParameters = method.Parameters.Select((p, i) => Tuple.Create(p, i)).Where(p => p.Item1.ParameterType.IsByReference).ToList();
+            var refOrOutParameters = method.Parameters.Select((p, i) => new { Item1 = p, Item2 = i }).Where(p => p.Item1.ParameterType.IsByReference).ToList();
 
             // create object array...
             il.Append(il.Create(OpCodes.Ldc_I4, method.Parameters.Count));
