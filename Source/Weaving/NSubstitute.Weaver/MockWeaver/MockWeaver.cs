@@ -16,13 +16,20 @@ namespace NSubstitute.Weaving
                     Directory.CreateDirectory(targetPath);
 
                 var target = Path.Combine(targetPath, Path.GetFileName(assemblyToPatch));
-                InjectFakes(assembly, target, registryAssemblyPath);
+                InjectFakes(assembly, target, registryAssemblyPath, Path.GetDirectoryName(assemblyToPatch));
             }
         }
 
-        public static void InjectFakes(Stream intoAssembly, string targetAssemblyPath, string mockRegistryAssemblyPath)
+        public static void InjectFakes(Stream intoAssembly, string targetAssemblyPath, string mockRegistryAssemblyPath, string assemblySeachPath = null)
         {
-            var assembly = AssemblyDefinition.ReadAssembly(intoAssembly);
+			var readerParams = new ReaderParameters();
+	        if (assemblySeachPath != null)
+	        {
+		        var resolver = new DefaultAssemblyResolver();
+				resolver.AddSearchDirectory(assemblySeachPath);
+		        readerParams.AssemblyResolver = resolver;
+	        }
+	        var assembly = AssemblyDefinition.ReadAssembly(intoAssembly, readerParams);
 
             assembly.Accept(new MockInjectorVisitor(AssemblyDefinition.ReadAssembly(mockRegistryAssemblyPath), assembly.MainModule));
 
