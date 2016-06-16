@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 using Unity.Cecil.Visitor;
 
 namespace NSubstitute.Weaving
@@ -13,17 +13,31 @@ namespace NSubstitute.Weaving
         readonly MethodDefinition m_HookForInstance;
         readonly Stack<List<MethodDefinition>> m_InjectedMethods = new Stack<List<MethodDefinition>>();
         readonly IList<MethodDefinition> m_Processed = new List<MethodDefinition>();
-        readonly TypeReference m_CompilerGeneratedAttrType;
+	    readonly AssemblyNameReference m_MSCorlibReference;
+	    readonly MethodReference m_CompilerGeneratedAttrCtor;
+	    readonly TypeReference m_ObjectType;
+	    readonly MethodReference m_GetTypeFromHandleMethod;
+		readonly TypeReference m_TypeType;
 
-        public MockInjectorVisitor(AssemblyDefinition fakeFramework, ModuleDefinition module)
+	    public MockInjectorVisitor(AssemblyDefinition fakeFramework, ModuleDefinition module)
         {
-            m_HookForInstance = fakeFramework.MainModule.Types.Single(t => t.Name == "CastlePatchedInterceptorRegistry").Methods.Single(m => m.Name == "CallMockMethodOrImpl");
-            m_CompilerGeneratedAttrType = module.Import(typeof(CompilerGeneratedAttribute));
+		    m_MSCorlibReference = module.AssemblyReferences.Single(ar => ar.Name == "mscorlib");
+
+		    m_HookForInstance = fakeFramework.MainModule.Types.Single(t => t.Name == "CastlePatchedInterceptorRegistry").Methods.Single(m => m.Name == "CallMockMethodOrImpl");
+
+			var compilerServicesType = new TypeReference("System.Runtime.CompilerServices", "CompilerGeneratedAttribute", module, m_MSCorlibReference);
+			m_CompilerGeneratedAttrCtor = module.Import(compilerServicesType.Resolve().GetConstructors().Single(ctor => !ctor.HasParameters));
+
+			m_ObjectType = new TypeReference("System", "Object", module, m_MSCorlibReference);
+			m_TypeType = new TypeReference("System", "Type", module, m_MSCorlibReference);
+
+		    var resolvedSystemType = m_TypeType.Resolve();
+			m_GetTypeFromHandleMethod = module.Import(resolvedSystemType.Methods.Single(m => m.Name == "GetTypeFromHandle" && m.HasParameters && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.FullName == "System.RuntimeTypeHandle"));
         }
 
         protected override void Visit(TypeDefinition typeDefinition, Context context)
         {
-            if (typeDefinition.HasCustomAttributes && typeDefinition.CustomAttributes.Any(ca => ca.AttributeType.FullName == m_CompilerGeneratedAttrType.FullName))
+            if (typeDefinition.HasCustomAttributes && typeDefinition.CustomAttributes.Any(ca => ca.AttributeType.FullName == m_CompilerGeneratedAttrCtor.DeclaringType.FullName))
                 return;
 
             if (typeDefinition.IsInterface)
@@ -89,8 +103,7 @@ namespace NSubstitute.Weaving
             methodCopy.DeclaringType = methodToCopy.DeclaringType;
             methodCopy.IsPrivate = true;
 
-            methodCopy.CustomAttributes.Add(
-                new CustomAttribute(methodToCopy.Module.Import(typeof(CompilerGeneratedAttribute).GetConstructor(new Type[0]))));
+	        methodCopy.CustomAttributes.Add(new CustomAttribute(m_CompilerGeneratedAttrCtor));
 
             if (methodCopy.Body == null)
                 methodCopy.Body = new MethodBody(methodCopy);
@@ -135,7 +148,7 @@ namespace NSubstitute.Weaving
                 methodCopy.Body.ExceptionHandlers.Add(exceptionHandler);
         }
 
-        static string MangleNameForMockedMethod(MethodDefinition method)
+	    static string MangleNameForMockedMethod(MethodDefinition method)
         {
             return "__mock_" + method.Name;
         }
@@ -151,7 +164,7 @@ namespace NSubstitute.Weaving
             il.Body.Instructions.Clear();
             il.Body.ExceptionHandlers.Clear();
 
-            var paramArr = new VariableDefinition("__paramarr", method.Module.Import(typeof(object[])));
+            var paramArr = new VariableDefinition("__paramarr", m_ObjectType.MakeArrayType());
             il.Body.InitLocals = true;
             il.Body.Variables.Add(paramArr);
 
@@ -175,14 +188,14 @@ namespace NSubstitute.Weaving
                 : 0;
 
             il.Append(il.Create(OpCodes.Ldc_I4, genericParamsCount));
-            il.Append(il.Create(OpCodes.Newarr, module.Import(typeof(Type))));
+            il.Append(il.Create(OpCodes.Newarr, m_TypeType));
             for (int index = 0; index < genericParamsCount; index++)
             {
                 var parameter = method.GenericParameters[index];
                 il.Append(il.Create(OpCodes.Dup));
                 il.Append(il.Create(OpCodes.Ldc_I4, index));
                 il.Append(il.Create(OpCodes.Ldtoken, parameter));
-                il.Append(il.Create(OpCodes.Call, module.Import(typeof(Type).GetMethod("GetTypeFromHandle"))));
+                il.Append(il.Create(OpCodes.Call, m_GetTypeFromHandleMethod));
                 il.Append(il.Create(OpCodes.Stelem_Ref));
             }
 
