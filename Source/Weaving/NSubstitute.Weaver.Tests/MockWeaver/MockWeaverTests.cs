@@ -11,6 +11,7 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Mono.Cecil;
 using NUnit.Framework;
 
 namespace NSubstitute.Weaving.Tests
@@ -19,6 +20,50 @@ namespace NSubstitute.Weaving.Tests
     public class MockWeaverTests
     {
         [Test]
+        public void Abstract_Properties_Are_Not_Patched()
+        {
+	        AssertPatchedAssembly(
+				"abstract class C { public abstract int Prop { get ; } }", 
+				patchedAssembly =>
+				{
+					var type = patchedAssembly.MainModule.GetType("C");
+					var method = type.Methods.SingleOrDefault(m => m.Name == "__mock_get_Prop");
+
+					Assert.That(method, Is.Null, "Abstract methods/properties should not be patched.");
+				});
+        }
+
+	    [Test]
+        public void Abstract_Methods_Are_Not_Patched()
+	    {
+		    AssertPatchedAssembly(
+				"abstract class C { public abstract int M(); }", 
+				patchedAssembly =>
+				{
+					var type = patchedAssembly.MainModule.GetType("C");
+					var method = type.Methods.SingleOrDefault(m => m.Name == "__mock_M");
+
+					Assert.That(method, Is.Null, "Abstract methods/properties should not be patched.");
+				});
+	    }
+
+	    [Test]
+        public void Non_Abstract_Methods_Are_Patched_When_Declaring_Type_Is_Abstract()
+        {
+            AssertPatchedAssembly(
+				"abstract class C { public abstract int M(); public void M1() {} }",
+	            patchedAssembly =>
+	            {
+		            var type = patchedAssembly.MainModule.GetType("C");
+		            var method = type.Methods.SingleOrDefault(m => m.Name == "__mock_M");
+
+		            AssertPatchedType(type);
+
+					Assert.That(method, Is.Null, "Abstract methods/properties should not be patched.");
+	            });
+        }
+
+	    [Test]
         public void ICalls()
         {
             AssertHookInjection(
@@ -226,7 +271,24 @@ public class C { public void M() { try { throw new System.Exception(""Hello worl
                 (t, o) => null);
         }
 
-        static void AssertRecordedHookInjection(string codeToPatch, string testSource, [CallerMemberName] string testName = null)
+		private void AssertPatchedAssembly(string testSource, Action<AssemblyDefinition> validator, [CallerMemberName] string testName = null)
+		{
+			var testAssemblyPath = CompileAssemblyAndCacheResult(testName, "AssertPatchedAssembly", new[] { testSource });
+			var hookedTestAssemblyPath = Path.ChangeExtension(testAssemblyPath, ".Patched" + Path.GetExtension(testAssemblyPath));
+
+			using (var assembly = File.OpenRead(testAssemblyPath))
+			{
+				MockWeaver.InjectFakes(assembly, hookedTestAssemblyPath, Assembly.GetExecutingAssembly().Location);
+
+				Console.WriteLine("Original assembly: {0}", testAssemblyPath);
+				Console.WriteLine("Patched assembly: {0}", hookedTestAssemblyPath);
+
+				var patchedAssembly = AssemblyDefinition.ReadAssembly(hookedTestAssemblyPath);
+				validator(patchedAssembly);
+			}
+		}
+
+	    static void AssertRecordedHookInjection(string codeToPatch, string testSource, [CallerMemberName] string testName = null)
         {
             var testAssemblyPath = CompileAssemblyAndCacheResult(testName, "Simple", new[] { codeToPatch, testSource });
             var hookedTestAssemblyPath = Path.ChangeExtension(testAssemblyPath, ".Injected" + Path.GetExtension(testAssemblyPath));
@@ -273,6 +335,7 @@ public class C { public void M() { try { throw new System.Exception(""Hello worl
         static void AssertHookInjection(string codeToPatch, string testName, Func<Type[], object[], object> hookFunc, object expectedValueFromHook, object[] args = null, Type[] genArgs = null)
         {
             CastlePatchedInterceptorRegistry.Clear();
+
             var tree = CSharpSyntaxTree.ParseText(codeToPatch);
             var code = (CompilationUnitSyntax)tree.GetRoot();
             var testClass = code.Members.OfType<ClassDeclarationSyntax>().Single();
@@ -351,7 +414,16 @@ public class C { public void M() { try { throw new System.Exception(""Hello worl
             }
         }
 
-        protected static string CompileAssemblyAndCacheResult(string assemblyNamePrefix, string subfolder, IEnumerable<string> sources, IEnumerable<string> assemblyReferences = null)
+		private void AssertPatchedType(TypeDefinition type)
+		{
+			var instanceMockInterceptor = type.Fields.SingleOrDefault(f => f.Name == "__mockInterceptor");
+			var staticMockInterceptor = type.Fields.SingleOrDefault(f => f.Name == "__mockStaticInterceptor");
+
+			Assert.That(instanceMockInterceptor, Is.Not.Null, "Interceptor field not found.");
+			Assert.That(staticMockInterceptor, Is.Not.Null, "Interceptor field not found.");
+		}
+
+		protected static string CompileAssemblyAndCacheResult(string assemblyNamePrefix, string subfolder, IEnumerable<string> sources, IEnumerable<string> assemblyReferences = null)
         {
             var outputFolder = Path.Combine(Path.GetTempPath(), "FakeTests", subfolder);
             if (!Directory.Exists(outputFolder))

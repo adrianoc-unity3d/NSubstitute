@@ -81,12 +81,15 @@ namespace NSubstitute.Weaving
             if (m_Processed.Contains(methodDefinition))
                 return;
 
-            m_Processed.Add(methodDefinition);
-
             if (methodDefinition.IsConstructor)
                 return;
 
-            var mockedMethodName = MangleNameForMockedMethod(methodDefinition);
+            if (methodDefinition.IsAbstract)
+                return;
+
+			m_Processed.Add(methodDefinition);
+
+			var mockedMethodName = MangleNameForMockedMethod(methodDefinition);
             CreateMockMethod(methodDefinition, mockedMethodName);
 
             ReplaceBodyWithProxyCall(methodDefinition);
