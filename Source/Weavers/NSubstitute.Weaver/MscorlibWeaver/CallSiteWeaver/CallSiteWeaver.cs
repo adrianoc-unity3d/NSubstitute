@@ -2,7 +2,7 @@ using System;
 using Mono.Cecil;
 using Mono.Collections.Generic;
 
-namespace NSubstitute.Weaving
+namespace NSubstitute.Weavers
 {
     public class CallSiteWeaver
     {

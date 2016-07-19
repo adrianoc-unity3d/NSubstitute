@@ -3,7 +3,7 @@ using System.IO;
 using Mono.Cecil;
 using Unity.Cecil.Visitor;
 
-namespace NSubstitute.Weaving
+namespace NSubstitute.Weavers
 {
     public static class MockWeaver
     {

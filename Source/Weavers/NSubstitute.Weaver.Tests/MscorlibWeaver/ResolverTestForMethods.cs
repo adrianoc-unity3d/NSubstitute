@@ -5,7 +5,7 @@ using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
 using NUnit.Framework;
 
-namespace NSubstitute.Weaving.Tests
+namespace NSubstitute.Weavers.Tests
 {
     [TestFixture]
     class ResolverTestForMethods : ResolverTestBase

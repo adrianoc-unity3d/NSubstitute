@@ -4,7 +4,7 @@ using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
 
-namespace NSubstitute.Weaving
+namespace NSubstitute.Weavers
 {
     class Resolver
     {

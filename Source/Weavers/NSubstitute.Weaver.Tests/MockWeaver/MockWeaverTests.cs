@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Mono.Cecil;
 using NUnit.Framework;
 
-namespace NSubstitute.Weaving.Tests
+namespace NSubstitute.Weavers.Tests
 {
     [TestFixture]
     public class MockWeaverTests

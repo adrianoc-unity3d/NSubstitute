@@ -6,7 +6,7 @@ using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
 using Unity.Cecil.Visitor;
 
-namespace NSubstitute.Weaving
+namespace NSubstitute.Weavers
 {
     class MockInjectorVisitor : Visitor
     {
