@@ -5,6 +5,7 @@
   <PropertyGroup>
     <ProjectGuid>{4A533306-C5CA-4DA5-A665-3EBA0CD17CFB}</ProjectGuid>
     <OutputType>Library</OutputType>
+    <OutputPath>..\bin\$(Configuration)\</OutputPath>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Weavers</RootNamespace>
     <AssemblyName>Weavers</AssemblyName>
@@ -34,6 +35,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NSubstitute.Weaver\NSubstitute.Weaver.csproj">
+      <Project>{1f4e8339-bc3e-4caf-9f18-971a30b35a5e}</Project>
+      <Name>NSubstitute.Weaver</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
