@@ -7,33 +7,40 @@ namespace NSubstitute.Weavers
 {
     public static class MockWeaver
     {
-        public static void InjectFakes(string assemblyToPatch, string registryAssemblyPath)
+        public static void InjectFakes(string assemblyToPatchPath, string nsubstituteAssemblyPath)
         {
-            using (var assembly = File.OpenRead(assemblyToPatch))
+            using (var sourceAssemblyFile = File.OpenRead(assemblyToPatchPath))
             {
-                var targetPath = Path.Combine(Path.GetDirectoryName(assemblyToPatch), "Patched");
-                if (!Directory.Exists(targetPath))
-                    Directory.CreateDirectory(targetPath);
+                var outputAssemblyPath = Path.Combine(Path.GetDirectoryName(assemblyToPatchPath), "Patched", Path.GetFileName(assemblyToPatchPath));
+                Directory.CreateDirectory(Path.GetDirectoryName(outputAssemblyPath));
 
-                var target = Path.Combine(targetPath, Path.GetFileName(assemblyToPatch));
-                InjectFakes(assembly, target, registryAssemblyPath, Path.GetDirectoryName(assemblyToPatch));
+                InjectFakes(sourceAssemblyFile, outputAssemblyPath, nsubstituteAssemblyPath, Path.GetDirectoryName(assemblyToPatchPath));
             }
         }
 
-        public static void InjectFakes(Stream intoAssembly, string targetAssemblyPath, string mockRegistryAssemblyPath, string assemblySeachPath = null)
+        public static void InjectFakes(Stream assemblyToPatchFile, string outputAssemblyPath, string nsubstituteAssemblyPath, string assemblySearchPath = null)
         {
-			var readerParams = new ReaderParameters();
-	        if (assemblySeachPath != null)
-	        {
-		        var resolver = new DefaultAssemblyResolver();
-				resolver.AddSearchDirectory(assemblySeachPath);
-		        readerParams.AssemblyResolver = resolver;
-	        }
-	        var assembly = AssemblyDefinition.ReadAssembly(intoAssembly, readerParams);
+            var readerParams = new ReaderParameters();
+            if (assemblySearchPath != null)
+            {
+                var resolver = new DefaultAssemblyResolver();
+                resolver.AddSearchDirectory(assemblySearchPath);
+                readerParams.AssemblyResolver = resolver;
+            }
 
-            assembly.Accept(new MockInjectorVisitor(AssemblyDefinition.ReadAssembly(mockRegistryAssemblyPath), assembly.MainModule));
+            var assemblyToPatch = AssemblyDefinition.ReadAssembly(assemblyToPatchFile, readerParams);
+            assemblyToPatch.Accept(new MockInjectorVisitor(AssemblyDefinition.ReadAssembly(nsubstituteAssemblyPath), assemblyToPatch.MainModule));
+            assemblyToPatch.Write(outputAssemblyPath, new WriterParameters { WriteSymbols = true});
+        }
 
-            assembly.Write(targetAssemblyPath, new WriterParameters { WriteSymbols = true});
+        internal static void InjectFakes(ModuleDefinition assemblyToPatch)
+        {
+            //assemblyToPatch.Accept(new MockInjectorVisitor(AssemblyDefinition.ReadAssembly(nsubstituteAssemblyPath), assemblyToPatch));
+
+            // this is copied from a sample, but let's leave it in here to check basic fody injection mechanics are set up right (there's a test for it elsewhere)
+            var typeDefinition = new TypeDefinition("NSubstitute.Weavers.Tests", "InjectedTypeForTest", TypeAttributes.NotPublic, assemblyToPatch.Import(typeof(object)));
+
+            assemblyToPatch.Types.Add(typeDefinition);
         }
     }
 }

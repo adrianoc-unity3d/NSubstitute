@@ -11,7 +11,7 @@ namespace NSubstitute.Weavers.Tests
         [Test]
         public void Fody_Is_Patching_Test_Assembly()
         {
-            Assembly.GetExecutingAssembly().GetType("Weavers.TypeInjectedByModuleWeaver").ShouldNotBeNull();
+            Assembly.GetExecutingAssembly().GetType("NSubstitute.Weavers.Tests.InjectedTypeForTest").ShouldNotBeNull();
         }
     }
 }
