@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
 using NSubstitute.Core;
 using NSubstitute.Routing;
+using NSubstitute.ClearExtensions;
 #if (NET4 || NET45)
 using System.Threading.Tasks;
 #endif
@@ -141,8 +141,8 @@ namespace NSubstitute
                 returnValue = new ReturnValue(returnThis);
             }
             else
-            {            
-                returnValue = new ReturnMultipleValues<T>(new[] {returnThis}.Concat(returnThese));
+            {
+                returnValue = new ReturnMultipleValues<T>(new[] { returnThis }.Concat(returnThese));
             }
             return context.LastCallShouldReturn(returnValue, matchArgs);
         }
@@ -256,11 +256,12 @@ namespace NSubstitute
         /// <param name="substitute"></param>
         /// <remarks>
         /// Note that this will not clear any results set up for the substitute using Returns().
+        /// See <see cref="NSubstitute.ClearExtensions.ClearExtensions.ClearSubstitute{T}"/> for more options with resetting 
+        /// a substitute.
         /// </remarks>
         public static void ClearReceivedCalls<T>(this T substitute) where T : class
         {
-            var router = GetRouterForSubstitute(substitute);
-            router.ClearReceivedCalls();
+            substitute.ClearSubstitute(ClearOptions.ReceivedCalls);
         }
 
         /// <summary>
@@ -274,7 +275,7 @@ namespace NSubstitute
         public static WhenCalled<T> When<T>(this T substitute, Action<T> substituteCall) where T : class
         {
             var context = SubstitutionContext.Current;
-            return new WhenCalled<T>(context, substitute, substituteCall, MatchArgs.AsSpecifiedInCall);            
+            return new WhenCalled<T>(context, substitute, substituteCall, MatchArgs.AsSpecifiedInCall);
         }
 
         /// <summary>
@@ -288,7 +289,7 @@ namespace NSubstitute
         public static WhenCalled<T> WhenForAnyArgs<T>(this T substitute, Action<T> substituteCall) where T : class
         {
             var context = SubstitutionContext.Current;
-            return new WhenCalled<T>(context, substitute, substituteCall, MatchArgs.Any);            
+            return new WhenCalled<T>(context, substitute, substituteCall, MatchArgs.Any);
         }
 
         /// <summary>
