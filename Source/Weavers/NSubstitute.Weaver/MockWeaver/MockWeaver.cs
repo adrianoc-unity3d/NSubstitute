@@ -32,15 +32,5 @@ namespace NSubstitute.Weavers
             assemblyToPatch.Accept(new MockInjectorVisitor(AssemblyDefinition.ReadAssembly(nsubstituteAssemblyPath), assemblyToPatch.MainModule));
             assemblyToPatch.Write(outputAssemblyPath, new WriterParameters { WriteSymbols = true});
         }
-
-        internal static void InjectFakes(ModuleDefinition assemblyToPatch)
-        {
-            //assemblyToPatch.Accept(new MockInjectorVisitor(AssemblyDefinition.ReadAssembly(nsubstituteAssemblyPath), assemblyToPatch));
-
-            // this is copied from a sample, but let's leave it in here to check basic fody injection mechanics are set up right (there's a test for it elsewhere)
-            var typeDefinition = new TypeDefinition("NSubstitute.Weavers.Tests", "InjectedTypeForTest", TypeAttributes.NotPublic, assemblyToPatch.Import(typeof(object)));
-
-            assemblyToPatch.Types.Add(typeDefinition);
-        }
     }
 }

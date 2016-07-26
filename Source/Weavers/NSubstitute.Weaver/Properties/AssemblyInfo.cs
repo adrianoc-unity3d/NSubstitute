@@ -36,4 +36,3 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
 [assembly: InternalsVisibleTo("NSubstitute.Weaver.Tests")]
-[assembly: InternalsVisibleTo("Weavers")] // this is NSubstitute.Weaver.Tests.Fody

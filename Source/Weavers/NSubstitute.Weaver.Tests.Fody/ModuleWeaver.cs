@@ -10,22 +10,16 @@ using NSubstitute.Weavers;
 
 public class ModuleWeaver
 {
-    // see https://github.com/Fody/Fody/wiki/ModuleWeaver for all requirements and magic properties on this class
+    readonly FodyWeaver m_FodyWeaver = new FodyWeaver();
 
-    // we're given the module to weave
-    public ModuleDefinition ModuleDefinition { get; set; }
+    public ModuleDefinition ModuleDefinition { get { return m_FodyWeaver.ModuleDefinition; } set { m_FodyWeaver.ModuleDefinition = value; } }
+    public Action<string> LogDebug { get { return m_FodyWeaver.LogDebug; } set { m_FodyWeaver.LogDebug = value; } }
+    public Action<string> LogInfo { get { return m_FodyWeaver.LogInfo; } set { m_FodyWeaver.LogInfo = value; } }
+    public Action<string> LogWarning { get { return m_FodyWeaver.LogWarning; } set { m_FodyWeaver.LogWarning = value; } }
+    public Action<string> LogError { get { return m_FodyWeaver.LogError; } set { m_FodyWeaver.LogError = value; } }
 
-    // filled by fody with delegates that will log to msbuild
-    public Action<string> LogDebug { get; set; }
-    public Action<string> LogInfo { get; set; }
-    public Action<string> LogWarning { get; set; }
-    public Action<string> LogError { get; set; }
-
-    // called via fody during msbuild
     public void Execute()
     {
-        LogWarning(ModuleDefinition.Assembly.FullName);
-
-        MockWeaver.InjectFakes(ModuleDefinition);
+        m_FodyWeaver.Execute();
     }
 }
