@@ -37,6 +37,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\NSubstitute\NSubstitute.csproj">
+      <Project>{cc6c16cc-053d-4a67-b48f-7ff4304f2896}</Project>
+      <Name>NSubstitute</Name>
+    </ProjectReference>
     <ProjectReference Include="..\NSubstitute.Weaver\NSubstitute.Weaver.csproj">
       <Project>{1f4e8339-bc3e-4caf-9f18-971a30b35a5e}</Project>
       <Name>NSubstitute.Weaver</Name>

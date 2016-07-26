@@ -30,7 +30,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FodyWeaver\FodyWeaver.cs" />
+    <Compile Include="FodyWeaver\ModuleWeaver.cs" />
     <Compile Include="MscorlibWeaver\CallSiteWeaver\CallSiteWeaver.cs" />
     <Compile Include="MscorlibWeaver\CallSiteWeaver\Resolver.cs" />
     <Compile Include="CecilExtensions.cs" />
