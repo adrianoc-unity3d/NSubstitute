@@ -13,26 +13,26 @@ namespace NSubstitute.Weavers
         readonly MethodDefinition m_HookForInstance;
         readonly Stack<List<MethodDefinition>> m_InjectedMethods = new Stack<List<MethodDefinition>>();
         readonly IList<MethodDefinition> m_Processed = new List<MethodDefinition>();
-	    readonly AssemblyNameReference m_MSCorlibReference;
-	    readonly MethodReference m_CompilerGeneratedAttrCtor;
-	    readonly TypeReference m_ObjectType;
-	    readonly MethodReference m_GetTypeFromHandleMethod;
-		readonly TypeReference m_TypeType;
+        readonly AssemblyNameReference m_MSCorlibReference;
+        readonly MethodReference m_CompilerGeneratedAttrCtor;
+        readonly TypeReference m_ObjectType;
+        readonly MethodReference m_GetTypeFromHandleMethod;
+        readonly TypeReference m_TypeType;
 
-	    public MockInjectorVisitor(AssemblyDefinition fakeFramework, ModuleDefinition module)
+        public MockInjectorVisitor(AssemblyDefinition fakeFramework, ModuleDefinition module)
         {
-		    m_MSCorlibReference = module.AssemblyReferences.Single(ar => ar.Name == "mscorlib");
+            m_MSCorlibReference = module.AssemblyReferences.Single(ar => ar.Name == "mscorlib");
 
-		    m_HookForInstance = fakeFramework.MainModule.Types.Single(t => t.Name == "CastlePatchedInterceptorRegistry").Methods.Single(m => m.Name == "CallMockMethodOrImpl");
+            m_HookForInstance = fakeFramework.MainModule.Types.Single(t => t.Name == "CastlePatchedInterceptorRegistry").Methods.Single(m => m.Name == "CallMockMethodOrImpl");
 
-			var compilerServicesType = new TypeReference("System.Runtime.CompilerServices", "CompilerGeneratedAttribute", module, m_MSCorlibReference);
-			m_CompilerGeneratedAttrCtor = module.Import(compilerServicesType.Resolve().GetConstructors().Single(ctor => !ctor.HasParameters));
+            var compilerServicesType = new TypeReference("System.Runtime.CompilerServices", "CompilerGeneratedAttribute", module, m_MSCorlibReference);
+            m_CompilerGeneratedAttrCtor = module.Import(compilerServicesType.Resolve().GetConstructors().Single(ctor => !ctor.HasParameters));
 
-			m_ObjectType = new TypeReference("System", "Object", module, m_MSCorlibReference);
-			m_TypeType = new TypeReference("System", "Type", module, m_MSCorlibReference);
+            m_ObjectType = new TypeReference("System", "Object", module, m_MSCorlibReference);
+            m_TypeType = new TypeReference("System", "Type", module, m_MSCorlibReference);
 
-		    var resolvedSystemType = m_TypeType.Resolve();
-			m_GetTypeFromHandleMethod = module.Import(resolvedSystemType.Methods.Single(m => m.Name == "GetTypeFromHandle" && m.HasParameters && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.FullName == "System.RuntimeTypeHandle"));
+            var resolvedSystemType = m_TypeType.Resolve();
+            m_GetTypeFromHandleMethod = module.Import(resolvedSystemType.Methods.Single(m => m.Name == "GetTypeFromHandle" && m.HasParameters && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.FullName == "System.RuntimeTypeHandle"));
         }
 
         protected override void Visit(TypeDefinition typeDefinition, Context context)
@@ -87,9 +87,9 @@ namespace NSubstitute.Weavers
             if (methodDefinition.IsAbstract)
                 return;
 
-			m_Processed.Add(methodDefinition);
+            m_Processed.Add(methodDefinition);
 
-			var mockedMethodName = MangleNameForMockedMethod(methodDefinition);
+            var mockedMethodName = MangleNameForMockedMethod(methodDefinition);
             CreateMockMethod(methodDefinition, mockedMethodName);
 
             ReplaceBodyWithProxyCall(methodDefinition);
@@ -106,7 +106,7 @@ namespace NSubstitute.Weavers
             methodCopy.DeclaringType = methodToCopy.DeclaringType;
             methodCopy.IsPrivate = true;
 
-	        methodCopy.CustomAttributes.Add(new CustomAttribute(m_CompilerGeneratedAttrCtor));
+            methodCopy.CustomAttributes.Add(new CustomAttribute(m_CompilerGeneratedAttrCtor));
 
             if (methodCopy.Body == null)
                 methodCopy.Body = new MethodBody(methodCopy);
@@ -151,7 +151,7 @@ namespace NSubstitute.Weavers
                 methodCopy.Body.ExceptionHandlers.Add(exceptionHandler);
         }
 
-	    static string MangleNameForMockedMethod(MethodDefinition method)
+        static string MangleNameForMockedMethod(MethodDefinition method)
         {
             return "__mock_" + method.Name;
         }
