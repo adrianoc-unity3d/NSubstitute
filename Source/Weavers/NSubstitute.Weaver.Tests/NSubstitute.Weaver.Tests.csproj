@@ -73,6 +73,8 @@
     <None Include="MockWeaver\Hackweek\_Disabled\MathfTests.cs" />
     <None Include="MscorlibWeaver\Hackweek\_Disabled\DemoTests.cs" />
     <None Include="MscorlibWeaver\Hackweek\_Disabled\MscorlibTests.cs" />
+    <Compile Include="MockWeaver\Hackweek\Struct.cs" />
+    <Compile Include="MockWeaver\Hackweek\StructTest.cs" />
     <Compile Include="MscorlibWeaver\ResolverTestBase.cs" />
     <Compile Include="MscorlibWeaver\ResolverTestForMethods.cs" />
     <Compile Include="MscorlibWeaver\ResolverTestForTypes.cs" />
