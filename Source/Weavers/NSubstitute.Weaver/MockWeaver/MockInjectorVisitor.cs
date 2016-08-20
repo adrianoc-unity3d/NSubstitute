@@ -121,11 +121,17 @@ namespace NSubstitute.Weavers
 
             foreach (var parameter in methodToCopy.Parameters)
             {
-                // default values???
-                methodCopy.Parameters.Add(new ParameterDefinition(parameter.Name, parameter.Attributes, MapPotentialGenericParameterTypeReference(parameter.ParameterType, methodCopy)));
+	            var cloneParameter = new ParameterDefinition(parameter.Name, parameter.Attributes, MapPotentialGenericParameterTypeReference(parameter.ParameterType, methodCopy));
+				if (parameter.HasConstant)
+				{
+					cloneParameter.HasConstant = parameter.HasConstant;
+					cloneParameter.Constant = parameter.Constant;
+				};
+
+	            methodCopy.Parameters.Add(cloneParameter);
             }
 
-            if (methodToCopy.ReturnType.IsGenericParameter)
+	        if (methodToCopy.ReturnType.IsGenericParameter)
                 methodCopy.ReturnType = MapPotentialGenericParameterTypeReference(methodCopy.ReturnType, methodCopy);
 
             if (!methodToCopy.HasBody) return;
