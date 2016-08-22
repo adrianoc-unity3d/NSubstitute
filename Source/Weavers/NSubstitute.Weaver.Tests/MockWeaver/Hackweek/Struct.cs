@@ -2,7 +2,7 @@ using System;
 
 namespace NSubstitute.Weavers.Tests.Hackweek
 {
-	public class SimpleStruct
+	public struct SimpleStruct
 	{
 		public int m_Value;
 		public int m_AnotherPropertyValue;
