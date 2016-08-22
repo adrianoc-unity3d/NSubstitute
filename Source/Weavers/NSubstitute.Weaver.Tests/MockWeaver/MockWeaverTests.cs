@@ -47,6 +47,33 @@ namespace NSubstitute.Weavers.Tests
 				});
 	    }
 
+	    [Test, Category("Structures")]
+        public void SimpleStruct_Method()
+	    {
+			bool called = false;
+			AssertHookInjection(
+				"struct SimpleStruct { public int M() { return -1; } }",
+				"SimpleStruct",
+				(_, __) => { called = true; return 42; },
+				42);
+
+			Assert.That(called, Is.True, "Hook should have been executed");
+	    }
+
+		[Test, Category("Structures")]
+		public void SimpleStruct_Property()
+	    {
+			bool called = false;
+			AssertHookInjection(
+				"public struct SimpleStruct_Property { public int P { get { return -1; } set { } } }",
+				"SimpleStruct_Property",
+				(_, __) => { called = true; return 42; },
+				42);
+
+			Assert.That(called, Is.True, "Hook should have been executed");
+	    }
+
+
 	    [Test]
         public void Non_Abstract_Methods_Are_Patched_When_Declaring_Type_Is_Abstract()
         {
@@ -227,7 +254,22 @@ class C {
             Assert.That(originalArgs[2], Is.EqualTo("Goodbye world"));
         }
 
-        [Test]
+		[Test, Category("Methods")]
+		public void Method_With_Default_Value()
+		{
+			AssertPatchedAssembly(
+				"public class C { public int M(int v = 42) { return v; } }",
+				patchedAssembly =>
+				{
+					var type = patchedAssembly.MainModule.GetType("C");
+					var method = type.Methods.SingleOrDefault(m => m.Name == "__mock_M");
+
+					Assert.That(method.Parameters[0].HasConstant, Is.True);
+					Assert.That(method.Parameters[0].Constant, Is.EqualTo(42));
+				});
+		}
+
+		[Test]
         public void TestPropertySetter()
         {
             bool hasBeenCalled = false;
@@ -338,7 +380,7 @@ public class C { public void M() { try { throw new System.Exception(""Hello worl
 
             var tree = CSharpSyntaxTree.ParseText(codeToPatch);
             var code = (CompilationUnitSyntax)tree.GetRoot();
-            var testClass = code.Members.OfType<ClassDeclarationSyntax>().Single();
+            var testClass = code.Members.OfType<TypeDeclarationSyntax>().Single();
             var originalMethodDeclaration = (MethodDeclarationSyntax)testClass.Members.SingleOrDefault(m => m.IsKind(SyntaxKind.MethodDeclaration));
 
             var testAssemblyPath = CompileAssemblyAndCacheResult(testName, "Simple", new[] {codeToPatch});
