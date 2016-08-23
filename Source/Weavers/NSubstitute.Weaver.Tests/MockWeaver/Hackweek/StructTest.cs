@@ -10,7 +10,7 @@ namespace NSubstitute.Weavers.Tests.Hackweek
 		[Test]
 		public static void TestStructSetValueMethodCall ()
 		{
-			var ts = Substitute.For<SimpleStruct> ();
+			var ts = new SimpleStruct ();
 			ts.SetValue (10);
 			Assert.AreEqual (10, ts.m_Value);
 		}
@@ -18,7 +18,7 @@ namespace NSubstitute.Weavers.Tests.Hackweek
 		[Test]
 		public static void TestStructSetFieldDirect ()
 		{
-			var ts = Substitute.For<SimpleStruct> ();
+			var ts = new SimpleStruct ();
 			ts.m_Value = 10;
 			Assert.AreEqual (10, ts.m_Value);
 		}
@@ -26,7 +26,7 @@ namespace NSubstitute.Weavers.Tests.Hackweek
 		[Test]
 		public static void TestStructSetFieldDirect_Verify_WithGetMethod ()
 		{
-			var ts = Substitute.For<SimpleStruct> ();
+			var ts = new SimpleStruct ();
 			ts.m_Value = 10;
 			Assert.AreEqual (10, ts.GetValue ());
 		}
@@ -34,7 +34,7 @@ namespace NSubstitute.Weavers.Tests.Hackweek
 		[Test]
 		public static void TestStructSetGetProperty ()
 		{
-			var ts = Substitute.For<SimpleStruct> ();
+			var ts = new SimpleStruct ();
 			ts.valueProperty = 10;
 			Assert.AreEqual (10, ts.valueProperty);
 		}
@@ -42,7 +42,7 @@ namespace NSubstitute.Weavers.Tests.Hackweek
 		[Test]
 		public static void TestStructSetGetAnotherProperty ()
 		{
-			var ts = Substitute.For<SimpleStruct> ();
+			var ts = new SimpleStruct ();
 			ts.anotherValueProperty = 10;
 			Assert.AreEqual (10, ts.anotherValueProperty);
 			Assert.AreEqual (10, ts.m_AnotherPropertyValue);
