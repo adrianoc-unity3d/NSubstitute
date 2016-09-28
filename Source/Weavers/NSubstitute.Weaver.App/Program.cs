@@ -7,7 +7,7 @@ namespace NSubstitute.Weaver.App
     {
         public static int Main(string[] args)
         {
-            MockWeaver.InjectFakes(args[0], args[1]);
+            MockWeaver.InjectFakes(args[0], args.Length > 1 ? args[1] : null);
 
 #if NO
             // TODO: do the usual command line parsing. also we need to merge the prolog and call site patchers.

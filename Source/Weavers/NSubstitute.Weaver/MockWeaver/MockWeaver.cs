@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 using Mono.Cecil;
 using Unity.Cecil.Visitor;
 
@@ -27,6 +28,9 @@ namespace NSubstitute.Weavers
                 resolver.AddSearchDirectory(assemblySearchPath);
                 readerParams.AssemblyResolver = resolver;
             }
+
+            if (nsubstituteAssemblyPath == null)
+                nsubstituteAssemblyPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "NSubstitute.dll");
 
             var assemblyToPatch = AssemblyDefinition.ReadAssembly(assemblyToPatchFile, readerParams);
             assemblyToPatch.Accept(new MockInjectorVisitor(AssemblyDefinition.ReadAssembly(nsubstituteAssemblyPath), assemblyToPatch.MainModule));
