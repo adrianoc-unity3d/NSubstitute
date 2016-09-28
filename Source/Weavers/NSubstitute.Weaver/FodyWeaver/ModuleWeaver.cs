@@ -13,6 +13,9 @@ namespace NSubstitute.Weavers.Fody
         // we're given the module to weave and the xml element for the FodyWeavers.xml spec
         public ModuleDefinition ModuleDefinition { get; set; }
 
+        // will contain the full directory path of the current weaver
+        public string AddinDirectoryPath { get; set; }
+
         // filled by fody with delegates that will log to msbuild
         public Action<string> LogDebug { get; set; }
         public Action<string> LogInfo { get; set; }
@@ -25,19 +28,16 @@ namespace NSubstitute.Weavers.Fody
         // called via fody during msbuild
         public void Execute()
         {
-            if (NSubstituteAssemblyPath == null)
+            var nsubstituteAssemblyPath = NSubstituteAssemblyPath ?? Path.Combine(AddinDirectoryPath, "NSubstitute.dll");
+
+            if (!File.Exists(nsubstituteAssemblyPath))
             {
-                throw new NotImplementedException();
+                throw new FileNotFoundException($"Unable to weave without a valid NSubstitute assembly (given {nsubstituteAssemblyPath ?? "<none>"})");
             }
 
-            if (!File.Exists(NSubstituteAssemblyPath))
-            {
-                throw new FileNotFoundException("Unable to weave without a valid NSubstitute assembly", NSubstituteAssemblyPath);
-            }
+            LogDebug("Using NSubstitute assembly: " + nsubstituteAssemblyPath);
 
-            LogInfo("Using NSubstitute assembly: " + NSubstituteAssemblyPath);
-
-            ModuleDefinition.Accept(new MockInjectorVisitor(AssemblyDefinition.ReadAssembly(NSubstituteAssemblyPath), ModuleDefinition));
+            ModuleDefinition.Accept(new MockInjectorVisitor(AssemblyDefinition.ReadAssembly(nsubstituteAssemblyPath), ModuleDefinition));
 
             // this is copied from a sample, but let's leave it in here to check basic fody injection mechanics are set up right (there's a test for it elsewhere)
             var typeDefinition = new TypeDefinition("NSubstitute.Weavers.Tests", "InjectedTypeForTest", TypeAttributes.NotPublic, ModuleDefinition.Import(typeof(object)));
