@@ -18,10 +18,10 @@ namespace NSubstitute.Weavers.Tests.Hackweek
             itest
             .Foo(10, out value)
             .Returns(x =>
-            {
-                x[1] = 5;
-                return 8;
-            });
+                {
+                    x[1] = 5;
+                    return 8;
+                });
 
             // act
             var result = itest.Foo(10, out value);

@@ -68,21 +68,21 @@ public class MscorlibTests
     {
         var dt = new FDateTime(1, 2, 3);
         FDateTime.get_NowFake_static = () =>
-        {
-            var hook = CastlePatchedInterceptorRegistry.TryGetStaticHook(typeof(FDateTime), 1);
-            if (hook != null)
             {
-                var results = hook(new object[0]);
-
-                var retvalue = results[0];
-                if (!(retvalue is PassthroughPlaceholder))
+                var hook = CastlePatchedInterceptorRegistry.TryGetStaticHook(typeof(FDateTime), 1);
+                if (hook != null)
                 {
-                    return (FDateTime)retvalue;
-                }
-            }
+                    var results = hook(new object[0]);
 
-            return new FDateTime(DateTime.Now.Ticks);
-        };
+                    var retvalue = results[0];
+                    if (!(retvalue is PassthroughPlaceholder))
+                    {
+                        return (FDateTime)retvalue;
+                    }
+                }
+
+                return new FDateTime(DateTime.Now.Ticks);
+            };
 
         Assert.AreEqual(1, dt.Year);
 
@@ -97,39 +97,39 @@ public class MscorlibTests
         var sb = Substitute.ForPartsOf<FStringBuilder>();
 
         sb.get_LengthFake = () =>
-        {
-            var hook = CastlePatchedInterceptorRegistry.TryGetHook(sb);
-            if (hook != null)
             {
-                var results = hook(new object[0]);
-                var retvalue = results[0];
-                if (!(retvalue is PassthroughPlaceholder))
-                    return (int)retvalue;
-            }
+                var hook = CastlePatchedInterceptorRegistry.TryGetHook(sb);
+                if (hook != null)
+                {
+                    var results = hook(new object[0]);
+                    var retvalue = results[0];
+                    if (!(retvalue is PassthroughPlaceholder))
+                        return (int)retvalue;
+                }
 
-            var oldHook = sb.get_LengthFake;
-            sb.get_LengthFake = null;
-            var rv = sb.Length;
-            sb.get_LengthFake = oldHook;
-            return rv;
-        };
+                var oldHook = sb.get_LengthFake;
+                sb.get_LengthFake = null;
+                var rv = sb.Length;
+                sb.get_LengthFake = oldHook;
+                return rv;
+            };
         sb.ToStringFake = () =>
-        {
-            var hook = CastlePatchedInterceptorRegistry.TryGetHook(sb);
-            if (hook != null)
             {
-                var results = hook(new object[0]);
-                var retvalue = results[0];
-                if (!(retvalue is PassthroughPlaceholder))
-                    return (string)retvalue;
-            }
+                var hook = CastlePatchedInterceptorRegistry.TryGetHook(sb);
+                if (hook != null)
+                {
+                    var results = hook(new object[0]);
+                    var retvalue = results[0];
+                    if (!(retvalue is PassthroughPlaceholder))
+                        return (string)retvalue;
+                }
 
-            var oldHook = sb.ToStringFake;
-            sb.ToStringFake = null;
-            var rv = sb.ToString();
-            sb.ToStringFake = oldHook;
-            return rv;
-        };
+                var oldHook = sb.ToStringFake;
+                sb.ToStringFake = null;
+                var rv = sb.ToString();
+                sb.ToStringFake = oldHook;
+                return rv;
+            };
 
         sb.Append("abc");
 

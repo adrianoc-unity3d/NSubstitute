@@ -27,11 +27,11 @@ namespace NSubstitute.Weavers
 
             var types = new List<TypeDefinition>(m_Assembly.MainModule.Types.Where(t => toCopy.Contains(t.FullName)));
             types.Sort((lhs, rhs) =>
-            {
-                var lhsChain = InheritanceChainLength(lhs);
-                var rhsChain = InheritanceChainLength(rhs);
-                return lhsChain.CompareTo(rhsChain);
-            });
+                {
+                    var lhsChain = InheritanceChainLength(lhs);
+                    var rhsChain = InheritanceChainLength(rhs);
+                    return lhsChain.CompareTo(rhsChain);
+                });
             return types;
         }
     }

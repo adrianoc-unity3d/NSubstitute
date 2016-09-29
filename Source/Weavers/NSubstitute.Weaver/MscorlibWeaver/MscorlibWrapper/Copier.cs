@@ -113,7 +113,7 @@ namespace NSubstitute.Weavers
                 foreach (var parameter in method.Parameters)
                 {
                     var parameterDefinition = new ParameterDefinition(parameter.Name, parameter.Attributes,
-                        ResolveType(target, typeDefinition, parameter.ParameterType));
+                            ResolveType(target, typeDefinition, parameter.ParameterType));
                     methodDefinition.Parameters.Add(parameterDefinition);
                 }
 
@@ -151,10 +151,10 @@ namespace NSubstitute.Weavers
                 implMethod.Body.Instructions.Add(Instruction.Create(OpCodes.Ldarg_0)); // this
                 if (typeDefinition.IsValueType)
                     implMethod.Body.Instructions.Add(Instruction.Create(OpCodes.Ldflda,
-                        typeDefinition.Fields.Single(f => f.Name == k_FakeForward))); // this.__fake_forward
+                            typeDefinition.Fields.Single(f => f.Name == k_FakeForward))); // this.__fake_forward
                 else
                     implMethod.Body.Instructions.Add(Instruction.Create(OpCodes.Ldfld,
-                        FakeForwardField(typeDefinition)));
+                            FakeForwardField(typeDefinition)));
             }
 
             foreach (var param in implMethod.Parameters)
@@ -224,11 +224,11 @@ namespace NSubstitute.Weavers
             {
                 if (method.Parameters.Count > 0)
                     baseType = baseType.MakeGenericInstanceType(
-                        method.Parameters.Select<ParameterDefinition, TypeReference>(p => ResolveType(target, typeDefinition, p.ParameterType)).ToArray());
+                            method.Parameters.Select<ParameterDefinition, TypeReference>(p => ResolveType(target, typeDefinition, p.ParameterType)).ToArray());
             }
             else
                 baseType = baseType.MakeGenericInstanceType(
-                    method.Parameters.Select<ParameterDefinition, TypeReference>(p => ResolveType(target, typeDefinition, p.ParameterType))
+                        method.Parameters.Select<ParameterDefinition, TypeReference>(p => ResolveType(target, typeDefinition, p.ParameterType))
                         .Concat(new[] {ResolveType(target, typeDefinition, method.ReturnType)})
                         .ToArray());
 
@@ -334,7 +334,7 @@ namespace NSubstitute.Weavers
             var openInvoke = target.MainModule.Import(openType.Methods.Single(m => m.IsPublic && m.Name == "Invoke"));
 
             var realInvoke = new MethodReference(openInvoke.Name, openInvoke.ReturnType,
-                openInvoke.DeclaringType.MakeGenericInstanceType(genericType.GenericArguments.ToArray()))
+                    openInvoke.DeclaringType.MakeGenericInstanceType(genericType.GenericArguments.ToArray()))
             {
                 HasThis = openInvoke.HasThis,
                 ExplicitThis = openInvoke.ExplicitThis,
@@ -374,7 +374,7 @@ namespace NSubstitute.Weavers
                 var baseTypeCtor =
                     target.MainModule.Import(
                         typeDefinition.BaseType.Resolve()
-                            .Methods.Single(m => m.IsConstructor && m.Parameters.Count == 0));
+                        .Methods.Single(m => m.IsConstructor && m.Parameters.Count == 0));
                 methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Call, baseTypeCtor));
             }
         }
@@ -399,7 +399,7 @@ namespace NSubstitute.Weavers
                 var attribute = new CustomAttribute(target.MainModule.Import(customAttribute.Constructor.Resolve()));
                 foreach (var arg in customAttribute.ConstructorArguments)
                     attribute.ConstructorArguments.Add(new CustomAttributeArgument(
-                        target.MainModule.Import(arg.Type.Resolve()), arg.Value));
+                            target.MainModule.Import(arg.Type.Resolve()), arg.Value));
 
                 typeDefinition.CustomAttributes.Add(attribute);
             }
