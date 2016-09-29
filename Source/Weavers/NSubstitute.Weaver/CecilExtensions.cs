@@ -1,7 +1,7 @@
 using System.Linq;
 using Mono.Cecil;
 
-namespace NSubstitute.Weavers
+namespace NSubstitute.Weaver
 {
     public static class CecilExtensions
     {

@@ -4,7 +4,7 @@ using Mono.Cecil;
 using Unity.Cecil.Visitor;
 using TypeAttributes = Mono.Cecil.TypeAttributes;
 
-namespace NSubstitute.Weavers.Fody
+namespace NSubstitute.Weaver.Fody
 {
     public class ModuleWeaver
     {
@@ -43,7 +43,7 @@ namespace NSubstitute.Weavers.Fody
             if (Path.GetFileNameWithoutExtension(ModuleDefinition.FullyQualifiedName) == "NSubstitute.Weaver.Tests")
             {
                 // this is copied from a sample, but let's leave it in here to check basic fody injection mechanics are set up right (there's a test for it elsewhere)
-                var typeDefinition = new TypeDefinition("NSubstitute.Weavers.Tests", "InjectedTypeForTest", TypeAttributes.NotPublic, ModuleDefinition.Import(typeof(object)));
+                var typeDefinition = new TypeDefinition("NSubstitute.Weaver.Tests", "InjectedTypeForTest", TypeAttributes.NotPublic, ModuleDefinition.Import(typeof(object)));
                 ModuleDefinition.Types.Add(typeDefinition);
             }
         }

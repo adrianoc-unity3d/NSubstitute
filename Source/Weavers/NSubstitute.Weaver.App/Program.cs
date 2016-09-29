@@ -1,5 +1,5 @@
 using System;
-using NSubstitute.Weavers;
+using NSubstitute.Weaver;
 
 namespace NSubstitute.Weaver.App
 {

@@ -1,6 +1,6 @@
 using Mono.Cecil;
 
-namespace NSubstitute.Weavers
+namespace NSubstitute.Weaver
 {
     public static class Wrapper
     {

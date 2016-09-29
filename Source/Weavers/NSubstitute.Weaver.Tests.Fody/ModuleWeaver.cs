@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Mono.Cecil;
-using RealModuleWeaver = NSubstitute.Weavers.Fody.ModuleWeaver;
+using RealModuleWeaver = NSubstitute.Weaver.Fody.ModuleWeaver;
 
 // this project exists just to make fody happy for in-solution weaving. note that this project
 // outputs to solution root "Weavers" folder for the binaries so fody picks it up in order to

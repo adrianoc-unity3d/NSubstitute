@@ -1,7 +1,7 @@
 using System;
 using Mono.Cecil;
 
-namespace NSubstitute.Weavers.Tests
+namespace NSubstitute.Weaver.Tests
 {
     class ResolverTestBase
     {

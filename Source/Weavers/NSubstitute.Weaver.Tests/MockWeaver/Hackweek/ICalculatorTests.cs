@@ -2,7 +2,7 @@ using System;
 using NSubstitute;
 using NUnit.Framework;
 
-namespace NSubstitute.Weavers.Tests.Hackweek
+namespace NSubstitute.Weaver.Tests.Hackweek
 {
     // to support: privates, concretes, structs, partial mock statics
     // non-goals: fields

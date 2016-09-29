@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
 
-namespace NSubstitute.Weavers
+namespace NSubstitute.Weaver
 {
     class ProcessTypeResolver
     {

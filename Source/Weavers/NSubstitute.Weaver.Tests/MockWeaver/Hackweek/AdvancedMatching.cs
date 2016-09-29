@@ -1,6 +1,6 @@
 using System;
 
-namespace NSubstitute.Weavers.Tests.Hackweek
+namespace NSubstitute.Weaver.Tests.Hackweek
 {
     public class AdvancedMatching
     {

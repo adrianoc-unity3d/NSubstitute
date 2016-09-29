@@ -3,7 +3,7 @@ using System.Reflection;
 using NUnit.Framework;
 using Shouldly;
 
-namespace NSubstitute.Weavers.Tests
+namespace NSubstitute.Weaver.Tests
 {
     [TestFixture]
     public class FodyWeaverTests
@@ -11,7 +11,7 @@ namespace NSubstitute.Weavers.Tests
         [Test]
         public void Fody_Is_Patching_Test_Assembly()
         {
-            Assembly.GetExecutingAssembly().GetType("NSubstitute.Weavers.Tests.InjectedTypeForTest").ShouldNotBeNull();
+            Assembly.GetExecutingAssembly().GetType("NSubstitute.Weaver.Tests.InjectedTypeForTest").ShouldNotBeNull();
         }
     }
 }

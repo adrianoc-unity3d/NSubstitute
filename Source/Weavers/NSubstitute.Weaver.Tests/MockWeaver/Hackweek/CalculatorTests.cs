@@ -2,7 +2,7 @@ using System;
 using NSubstitute.Exceptions;
 using NUnit.Framework;
 
-namespace NSubstitute.Weavers.Tests.Hackweek
+namespace NSubstitute.Weaver.Tests.Hackweek
 {
     [TestFixture]
     public class CalculatorTests
