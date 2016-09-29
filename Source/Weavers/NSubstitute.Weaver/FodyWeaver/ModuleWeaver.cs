@@ -39,9 +39,13 @@ namespace NSubstitute.Weavers.Fody
 
             ModuleDefinition.Accept(new MockInjectorVisitor(AssemblyDefinition.ReadAssembly(nsubstituteAssemblyPath), ModuleDefinition));
 
-            // this is copied from a sample, but let's leave it in here to check basic fody injection mechanics are set up right (there's a test for it elsewhere)
-            var typeDefinition = new TypeDefinition("NSubstitute.Weavers.Tests", "InjectedTypeForTest", TypeAttributes.NotPublic, ModuleDefinition.Import(typeof(object)));
-            ModuleDefinition.Types.Add(typeDefinition);
+            // TODO: would be better to tune this with xml config rather than hard coded name matching
+            if (Path.GetFileNameWithoutExtension(ModuleDefinition.FullyQualifiedName) == "NSubstitute.Weaver.Tests")
+            {
+                // this is copied from a sample, but let's leave it in here to check basic fody injection mechanics are set up right (there's a test for it elsewhere)
+                var typeDefinition = new TypeDefinition("NSubstitute.Weavers.Tests", "InjectedTypeForTest", TypeAttributes.NotPublic, ModuleDefinition.Import(typeof(object)));
+                ModuleDefinition.Types.Add(typeDefinition);
+            }
         }
     }
 }
