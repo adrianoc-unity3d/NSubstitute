@@ -313,6 +313,8 @@ public class C { public void M() { try { throw new System.Exception(""Hello worl
                 (t, o) => null);
         }
 
+        delegate void Delegate();
+
 		private void AssertPatchedAssembly(string testSource, Action<AssemblyDefinition> validator, [CallerMemberName] string testName = null)
 		{
 			var testAssemblyPath = CompileAssemblyAndCacheResult(testName, "AssertPatchedAssembly", new[] { testSource });
