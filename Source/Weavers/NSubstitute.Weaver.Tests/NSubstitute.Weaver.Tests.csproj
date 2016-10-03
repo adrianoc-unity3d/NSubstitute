@@ -60,6 +60,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FodyWeaver\FodyWeaverTests.cs" />
+    <Compile Include="MockWeaver\BasicTests.cs" />
+    <Compile Include="MockWeaver\BasicTypes.cs" />
     <Compile Include="MockWeaver\Hackweek\AdvancedMatching.cs" />
     <Compile Include="MockWeaver\Hackweek\AdvancedMatchingTests.cs" />
     <Compile Include="MockWeaver\Hackweek\Calculator.cs" />
