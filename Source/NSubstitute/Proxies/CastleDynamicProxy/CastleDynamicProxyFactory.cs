@@ -62,6 +62,11 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
             }
 
             var instanceMocker = CastlePatchedInterceptorRegistry.GetInstanceMocker(typeToProxy);
+            if (instanceMocker != null && constructorArguments.Any())
+            {
+                // the entire point of a patched full mock is to avoid real code from running, so what are ctor params supposed to be used for?
+                throw new SubstituteException("Full mock types can only be default-constructed");
+            }
 
             // requests for additional interfaces cannot be done via patching (not per-instance anyway)
             if (additionalInterfaces.Any() || instanceMocker == null)
