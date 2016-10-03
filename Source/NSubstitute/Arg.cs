@@ -135,7 +135,7 @@ namespace NSubstitute
 
         private static Action<object> InvokeDelegateAction(params object[] arguments)
         {
-            return x => ((Delegate)x).DynamicInvoke(arguments);
+            return x => ((Delegate)x).DynamicInvoke(arguments ?? new object[] { null });
         }
     }
 }

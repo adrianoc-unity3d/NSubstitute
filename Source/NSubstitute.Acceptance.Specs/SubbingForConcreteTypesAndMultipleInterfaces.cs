@@ -60,6 +60,13 @@ namespace NSubstitute.Acceptance.Specs
         }
 
         [Test]
+        public void Sub_with_single_null_constructor_argument()
+        {
+            var sub = Substitute.For<ClassExpectingSingleNullCtorArg>(null);
+            Assert.That(sub.ReceivedNullCtor, Is.EqualTo(true));
+        }
+
+        [Test]
         public void Sub_for_inherited_interfaces()
         {
             var sub = Substitute.For<IFirstAndSecond>();
@@ -96,6 +103,17 @@ namespace NSubstitute.Acceptance.Specs
             public ClassWithCtorArgs(string s, int a) { StringFromCtorArg = s; IntFromCtorArg = a; }
             public string StringFromCtorArg { get; set; }
             public int IntFromCtorArg { get; set; }
+        }
+
+        public abstract class ClassExpectingSingleNullCtorArg
+        {
+            public ClassExpectingSingleNullCtorArg(string s)
+            {
+                if (s == null)
+                    ReceivedNullCtor = true;
+            }
+
+            public bool ReceivedNullCtor { get; private set; }
         }
     }
 }

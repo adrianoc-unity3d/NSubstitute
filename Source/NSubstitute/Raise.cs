@@ -45,7 +45,7 @@ namespace NSubstitute
         /// </summary>
         public static DelegateEventWrapper<THandler> Event<THandler>(params object[] arguments)
         {
-            return new DelegateEventWrapper<THandler>(arguments);
+            return new DelegateEventWrapper<THandler>(arguments ?? new object[] { null });
         }
     }
 }

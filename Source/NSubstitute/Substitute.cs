@@ -20,7 +20,7 @@ namespace NSubstitute
         public static T For<T>(params object[] constructorArguments) 
             where T : class
         {
-            return (T) For(new[] {typeof(T)}, constructorArguments);
+            return (T) For(new[] {typeof(T)}, constructorArguments ?? new object[] { null });
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace NSubstitute
             where T1 : class
             where T2 : class
         {
-            return (T1) For(new[] { typeof(T1), typeof(T2) }, constructorArguments);
+            return (T1) For(new[] { typeof(T1), typeof(T2) }, constructorArguments ?? new object[] { null });
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace NSubstitute
             where T2 : class
             where T3 : class
         {
-            return (T1) For(new[] { typeof(T1), typeof(T2), typeof(T3) }, constructorArguments);
+            return (T1) For(new[] { typeof(T1), typeof(T2), typeof(T3) }, constructorArguments ?? new object[] { null });
         }
 
         /// <summary>
@@ -85,14 +85,14 @@ namespace NSubstitute
         public static T ForPartsOf<T>(params object[] constructorArguments) 
             where T : class
         {
-            return (T) ForPartsOf(new[] {typeof (T)}, constructorArguments);
+            return (T) ForPartsOf(new[] {typeof (T)}, constructorArguments ?? new object[] { null });
         }
 
         public static T1 ForPartsOf<T1, T2>(params object[] constructorArguments) 
             where T1 : class
             where T2 : class
         {
-            return (T1) ForPartsOf(new[] {typeof (T1), typeof(T2) }, constructorArguments);
+            return (T1) ForPartsOf(new[] {typeof (T1), typeof(T2) }, constructorArguments ?? new object[] { null });
         }
 
         public static T1 ForPartsOf<T1, T2, T3>(params object[] constructorArguments) 
@@ -100,7 +100,7 @@ namespace NSubstitute
             where T2 : class
             where T3 : class
         {
-            return (T1) ForPartsOf(new[] {typeof (T1), typeof(T2), typeof(T3) }, constructorArguments);
+            return (T1) ForPartsOf(new[] {typeof (T1), typeof(T2), typeof(T3) }, constructorArguments ?? new object[] { null });
         }
 
         public static object ForPartsOf(Type[] typesToProxy, object[] constructorArguments) 
