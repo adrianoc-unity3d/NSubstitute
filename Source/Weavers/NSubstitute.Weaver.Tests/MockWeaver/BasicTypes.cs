@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace NSubstitute.Weaver.Tests
 {
-    class ClassWithNoDefaultCtor
+    public class ClassWithNoDefaultCtor
     {
         public ClassWithNoDefaultCtor(string i) { }
         public ClassWithNoDefaultCtor(string i1, string i2) { }

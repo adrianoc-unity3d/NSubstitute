@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -37,7 +38,13 @@ namespace NSubstitute.Weaver
 
         protected override void Visit(TypeDefinition typeDefinition, Context context)
         {
+            if (typeDefinition.Name == "<Module>")
+                return;
+
             if (typeDefinition.HasCustomAttributes && typeDefinition.CustomAttributes.Any(ca => ca.AttributeType.FullName == m_CompilerGeneratedAttrCtor.DeclaringType.FullName))
+                return;
+
+            if (typeDefinition.BaseType != null && typeDefinition.BaseType.FullName == typeDefinition.Module.Import(typeof(MulticastDelegate)).FullName)
                 return;
 
             if (typeDefinition.IsInterface)
@@ -54,6 +61,53 @@ namespace NSubstitute.Weaver
             }
 
             InjectMockingFields(typeDefinition, injectedMethods);
+
+            EnsureTypeHasEmptyDefaultCtor(typeDefinition);
+        }
+
+        private void EnsureTypeHasEmptyDefaultCtor(TypeDefinition typeDefinition)
+        {
+            if (typeDefinition.IsValueType)
+                return;
+
+            MethodDefinition ctor = null;
+            var ctors = typeDefinition.GetConstructors().Where(candiate => candiate.Parameters.Count == 0 || candiate.Parameters.All(p => p.HasDefault));
+            if (ctors.Count() == 0)
+            {
+                ctor = new MethodDefinition(".ctor", MethodAttributes.Public | MethodAttributes.RTSpecialName | MethodAttributes.SpecialName | MethodAttributes.HideBySig, typeDefinition.Module.TypeSystem.Void)
+                {
+                    IsManaged = true,
+                    DeclaringType = typeDefinition,
+                    HasThis = true,
+                };
+
+                typeDefinition.Methods.Add(ctor);
+            }
+            else
+            {
+                ctor = ctors.First();
+                ctor.IsPublic = true;
+            }
+
+            var body = ctor.Body;
+            var ilProcessor = body.GetILProcessor();
+            body.Instructions.Clear();
+
+
+            ilProcessor.Append(ilProcessor.Create(OpCodes.Ldarg_0));
+            var baseDefaultCtor = (MethodReference) typeDefinition.BaseType.Resolve().GetConstructors().SingleOrDefault(candidate => candidate.Parameters.Count == 0);
+
+            if (typeDefinition.BaseType.IsGenericInstance)
+            {
+                baseDefaultCtor = new MethodReference(baseDefaultCtor.Name, baseDefaultCtor.ReturnType, typeDefinition.BaseType) { HasThis =  baseDefaultCtor.HasThis };
+                ilProcessor.Append(ilProcessor.Create(OpCodes.Call, baseDefaultCtor));
+            }
+            else
+            { 
+                ilProcessor.Append(ilProcessor.Create(OpCodes.Call, baseDefaultCtor.Module != typeDefinition.Module ? typeDefinition.Module.Import(baseDefaultCtor) : baseDefaultCtor));
+            }
+                
+            ilProcessor.Append(ilProcessor.Create(OpCodes.Ret));
         }
 
         static void InjectMockingFields(TypeDefinition targetType, List<MethodDefinition> injectedMethods)

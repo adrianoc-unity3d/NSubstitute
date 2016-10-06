@@ -12,6 +12,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 using NUnit.Framework;
 
 namespace NSubstitute.Weaver.Tests
@@ -311,8 +313,53 @@ class C {
 public class C { public void M() { try { throw new System.Exception(""Hello world""); } catch (System.Exception ex) { throw; } } }",
                 (t, o) => null);
         }
+        
+        [TestCase("class C { public delegate void SímpleDelegate(); }", TestName = "Simple")]
+        [TestCase("class C { public delegate T GenericDelegate<T>(); }", TestName = "Generic")]
+        public void WillNotPatchDelegates(string source)
+        {
+            AssertPatchedAssembly(
+                            source,
+                            patchedAssembly =>
+                            {
+                                var type = patchedAssembly.MainModule.GetAllTypes().Single(t => t.Name.Contains("Delegate"));
+                                var mockedMethods = type.Methods.Where(m => m.Name.Contains("__mock_"));
 
-        delegate void Delegate();
+                                Assert.That(mockedMethods, Is.Empty, "Delegates should not be patched.");
+                            });
+        }
+
+        [TestCase("public class C {}", TestName = "NoDeaultCtor")]
+        [TestCase("public class C { private C() {} }", TestName = "PrivateDefaultCtor")]
+        [TestCase("public class C { public C() { System.Console.WriteLine(42); } }", TestName = "NonEmptyDefaultCtor")]
+        [TestCase("public class C { public C(int i = 0) { System.Console.WriteLine(42); } }", TestName = "DefaultCtorWithDefaultParameters")]
+        [TestCase("public class Base {} public class C : Base { }", TestName = "NoDefaultCtorNonObjectAsBaseType")]
+        [TestCase("public class Base { public Base(int i) {} } public class C : Base { C(int i):base(i) { } }", TestName = "NoDefaultCtorWithBaseTypeWithNoDefaultCtor")]
+        [TestCase("public class Base<T> { } public class C : Base<object> { C(int i):base() { } }", TestName = "GenericBase")]
+        public void Ensure_A_Public_Non_Throwing_Default_Ctor_Exists(string source)
+        {
+            AssertPatchedAssembly(
+                    source,
+                    patchedAssembly =>
+                    {
+                        var type = patchedAssembly.MainModule.GetAllTypes().Single(t => t.Name == "C");
+                        var ctors = type.Methods.Where(m => m.IsConstructor && (m.Parameters.Count == 0 || m.Parameters.All(p => p.HasDefault)));
+
+                        Assert.That(ctors.Count(), Is.EqualTo(1));
+
+                        var ctor = ctors.Single();
+
+                        Assert.That(
+                            ctor.Body.Instructions.Where(inst => inst.OpCode != OpCodes.Nop).Select(inst => inst.OpCode).ToArray(), 
+                            Is.EqualTo(new[] { OpCodes.Ldarg_0, OpCodes.Call, OpCodes.Ret }), 
+                            "Default .ctor should have no body.");
+
+                        Assert.That(ctor.IsPublic, Is.True, "Default .ctor should be public");
+
+                        var baseCtorCalled = (MethodReference) ctor.Body.Instructions.Single(inst => inst.OpCode == OpCodes.Call).Operand;
+                        Assert.That(baseCtorCalled.DeclaringType.Name, Is.EqualTo(type.BaseType.Name));
+                    });
+        }
 
         private void AssertPatchedAssembly(string testSource, Action<AssemblyDefinition> validator, [CallerMemberName] string testName = null)
         {
