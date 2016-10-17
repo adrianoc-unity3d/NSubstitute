@@ -309,56 +309,80 @@ class C {
         [Test]
         public void ExceptionTest()
         {
-            AssertHookInjection(@"
-public class C { public void M() { try { throw new System.Exception(""Hello world""); } catch (System.Exception ex) { throw; } } }",
+            AssertHookInjection(
+                "public class C { public void M() { try { throw new System.Exception(\"Hello world\"); } catch (System.Exception ex) { throw; } } }",
                 (t, o) => null);
         }
-        
+
         [TestCase("class C { public delegate void SímpleDelegate(); }", TestName = "Simple")]
         [TestCase("class C { public delegate T GenericDelegate<T>(); }", TestName = "Generic")]
         public void WillNotPatchDelegates(string source)
         {
             AssertPatchedAssembly(
-                            source,
-                            patchedAssembly =>
-                            {
-                                var type = patchedAssembly.MainModule.GetAllTypes().Single(t => t.Name.Contains("Delegate"));
-                                var mockedMethods = type.Methods.Where(m => m.Name.Contains("__mock_"));
+                source,
+                patchedAssembly =>
+                {
+                    var type = patchedAssembly.MainModule.GetAllTypes().Single(t => t.Name.Contains("Delegate"));
+                    var mockedMethods = type.Methods.Where(m => m.Name.Contains("__mock_"));
 
-                                Assert.That(mockedMethods, Is.Empty, "Delegates should not be patched.");
-                            });
+                    Assert.That(mockedMethods, Is.Empty, "Delegates should not be patched.");
+                });
         }
 
-        [TestCase("public class C {}", TestName = "NoDeaultCtor")]
-        [TestCase("public class C { private C() {} }", TestName = "PrivateDefaultCtor")]
-        [TestCase("public class C { public C() { System.Console.WriteLine(42); } }", TestName = "NonEmptyDefaultCtor")]
-        [TestCase("public class C { public C(int i = 0) { System.Console.WriteLine(42); } }", TestName = "DefaultCtorWithDefaultParameters")]
+        [Test]
+        public void WillNotPatchTestFixtureTypes()
+        {
+            AssertPatchedAssembly(
+                "class TestFixtureAttribute : System.Attribute { } [TestFixture] class C { void Dummy() { } }",
+                patchedAssembly =>
+                {
+                    var type = patchedAssembly.MainModule.GetType("C");
+                    AssertNonPatchedType(type);
+                });
+        }
+
+        [Test]
+        public void WillNotAddDefaultCtorIfNoNormalMethods()
+        {
+            AssertPatchedAssembly(
+                "public class C { private C() {} }",
+                patchedAssembly =>
+                {
+                    var type = patchedAssembly.MainModule.GetType("C");
+                    Assert.That(type.Methods.Where(m => m.IsConstructor).All(c => c.IsPrivate));
+                });
+        }
+
+        [TestCase("public class C {}", TestName = "NoDefaultCtor")]
+        [TestCase("public class C { private C() {} void Dummy() { } }", TestName = "PrivateDefaultCtor")]
+        [TestCase("public class C { public C() { System.Console.WriteLine(42); } void Dummy() { } }", TestName = "NonEmptyDefaultCtor")]
+        [TestCase("public class C { public C(int i = 0) { System.Console.WriteLine(42); } void Dummy() { } }", TestName = "DefaultCtorWithDefaultParameters")]
         [TestCase("public class Base {} public class C : Base { }", TestName = "NoDefaultCtorNonObjectAsBaseType")]
-        [TestCase("public class Base { public Base(int i) {} } public class C : Base { C(int i):base(i) { } }", TestName = "NoDefaultCtorWithBaseTypeWithNoDefaultCtor")]
-        [TestCase("public class Base<T> { } public class C : Base<object> { C(int i):base() { } }", TestName = "GenericBase")]
+        [TestCase("public class Base { public Base(int i) {} void Dummy() { } } public class C : Base { C(int i):base(i) { } void Dummy() { } }", TestName = "NoDefaultCtorWithBaseTypeWithNoDefaultCtor")]
+        [TestCase("public class Base<T> { } public class C : Base<object> { C(int i):base() { } void Dummy() { } }", TestName = "GenericBase")]
         public void Ensure_A_Public_Non_Throwing_Default_Ctor_Exists(string source)
         {
             AssertPatchedAssembly(
-                    source,
-                    patchedAssembly =>
-                    {
-                        var type = patchedAssembly.MainModule.GetAllTypes().Single(t => t.Name == "C");
-                        var ctors = type.Methods.Where(m => m.IsConstructor && (m.Parameters.Count == 0 || m.Parameters.All(p => p.HasDefault)));
+                source,
+                patchedAssembly =>
+                {
+                    var type = patchedAssembly.MainModule.GetAllTypes().Single(t => t.Name == "C");
+                    var ctors = type.Methods.Where(m => m.IsConstructor && (m.Parameters.Count == 0 || m.Parameters.All(p => p.HasDefault)));
 
-                        Assert.That(ctors.Count(), Is.EqualTo(1));
+                    Assert.That(ctors.Count(), Is.EqualTo(1));
 
-                        var ctor = ctors.Single();
+                    var ctor = ctors.Single();
 
-                        Assert.That(
-                            ctor.Body.Instructions.Where(inst => inst.OpCode != OpCodes.Nop).Select(inst => inst.OpCode).ToArray(), 
-                            Is.EqualTo(new[] { OpCodes.Ldarg_0, OpCodes.Call, OpCodes.Ret }), 
-                            "Default .ctor should have no body.");
+                    Assert.That(
+                        ctor.Body.Instructions.Where(inst => inst.OpCode != OpCodes.Nop).Select(inst => inst.OpCode).ToArray(),
+                        Is.EqualTo(new[] { OpCodes.Ldarg_0, OpCodes.Call, OpCodes.Ret }),
+                        "Default .ctor should have no body.");
 
-                        Assert.That(ctor.IsPublic, Is.True, "Default .ctor should be public");
+                    Assert.That(ctor.IsPublic, Is.True, "Default .ctor should be public");
 
-                        var baseCtorCalled = (MethodReference) ctor.Body.Instructions.Single(inst => inst.OpCode == OpCodes.Call).Operand;
-                        Assert.That(baseCtorCalled.DeclaringType.Name, Is.EqualTo(type.BaseType.Name));
-                    });
+                    var baseCtorCalled = (MethodReference)ctor.Body.Instructions.Single(inst => inst.OpCode == OpCodes.Call).Operand;
+                    Assert.That(baseCtorCalled.DeclaringType.Name, Is.EqualTo(type.BaseType.Name));
+                });
         }
 
         private void AssertPatchedAssembly(string testSource, Action<AssemblyDefinition> validator, [CallerMemberName] string testName = null)
@@ -504,13 +528,26 @@ public class C { public void M() { try { throw new System.Exception(""Hello worl
             }
         }
 
-        private void AssertPatchedType(TypeDefinition type)
+        static void AssertPatchedType(TypeDefinition type, bool invert = false)
         {
             var instanceMockInterceptor = type.Fields.SingleOrDefault(f => f.Name == "__mockInterceptor");
             var staticMockInterceptor = type.Fields.SingleOrDefault(f => f.Name == "__mockStaticInterceptor");
 
-            Assert.That(instanceMockInterceptor, Is.Not.Null, "Interceptor field not found.");
-            Assert.That(staticMockInterceptor, Is.Not.Null, "Interceptor field not found.");
+            if (invert)
+            {
+                Assert.That(instanceMockInterceptor, Is.Null, "Interceptor field found.");
+                Assert.That(staticMockInterceptor, Is.Null, "Interceptor field found.");
+            }
+            else
+            {
+                Assert.That(instanceMockInterceptor, Is.Not.Null, "Interceptor field not found.");
+                Assert.That(staticMockInterceptor, Is.Not.Null, "Interceptor field not found.");
+            }
+        }
+
+        static void AssertNonPatchedType(TypeDefinition type)
+        {
+            AssertPatchedType(type, true);
         }
 
         protected static string CompileAssemblyAndCacheResult(string assemblyNamePrefix, string subfolder, IEnumerable<string> sources, IEnumerable<string> assemblyReferences = null)

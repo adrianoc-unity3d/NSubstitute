@@ -41,7 +41,9 @@ namespace NSubstitute.Weaver
             if (typeDefinition.Name == "<Module>")
                 return;
 
-            if (typeDefinition.HasCustomAttributes && typeDefinition.CustomAttributes.Any(ca => ca.AttributeType.FullName == m_CompilerGeneratedAttrCtor.DeclaringType.FullName))
+            if (typeDefinition.HasCustomAttributes && typeDefinition.CustomAttributes.Any(ca =>
+                    ca.AttributeType.FullName == m_CompilerGeneratedAttrCtor.DeclaringType.FullName
+                    || ca.AttributeType.Name == "TestFixtureAttribute"))
                 return;
 
             if (typeDefinition.BaseType != null && typeDefinition.BaseType.FullName == typeDefinition.Module.Import(typeof(MulticastDelegate)).FullName)
@@ -62,12 +64,14 @@ namespace NSubstitute.Weaver
 
             InjectMockingFields(typeDefinition, injectedMethods);
 
-            EnsureTypeHasEmptyDefaultCtor(typeDefinition);
+            EnsureTypeHasEmptyDefaultCtor(typeDefinition, injectedMethods);
         }
 
-        private void EnsureTypeHasEmptyDefaultCtor(TypeDefinition typeDefinition)
+        private void EnsureTypeHasEmptyDefaultCtor(TypeDefinition typeDefinition, List<MethodDefinition> injectedMethods)
         {
             if (typeDefinition.IsValueType)
+                return;
+            if (injectedMethods.Count == 0)
                 return;
 
             MethodDefinition ctor = null;
@@ -95,7 +99,7 @@ namespace NSubstitute.Weaver
 
 
             ilProcessor.Append(ilProcessor.Create(OpCodes.Ldarg_0));
-            var baseDefaultCtor = (MethodReference) typeDefinition.BaseType.Resolve().GetConstructors().SingleOrDefault(candidate => candidate.Parameters.Count == 0);
+            var baseDefaultCtor = (MethodReference)typeDefinition.BaseType.Resolve().GetConstructors().SingleOrDefault(candidate => candidate.Parameters.Count == 0);
 
             if (typeDefinition.BaseType.IsGenericInstance)
             {
@@ -103,10 +107,10 @@ namespace NSubstitute.Weaver
                 ilProcessor.Append(ilProcessor.Create(OpCodes.Call, baseDefaultCtor));
             }
             else
-            { 
+            {
                 ilProcessor.Append(ilProcessor.Create(OpCodes.Call, baseDefaultCtor.Module != typeDefinition.Module ? typeDefinition.Module.Import(baseDefaultCtor) : baseDefaultCtor));
             }
-                
+
             ilProcessor.Append(ilProcessor.Create(OpCodes.Ret));
         }
 
@@ -400,8 +404,8 @@ namespace NSubstitute.Weaver
                 return genericParameter;
 
             return targetMethod.DeclaringType.HasGenericParameters
-                   ? targetMethod.DeclaringType.GenericParameters.Single(p => p.Name == type.Name)
-                   : null;
+                ? targetMethod.DeclaringType.GenericParameters.Single(p => p.Name == type.Name)
+                : null;
         }
     }
 }

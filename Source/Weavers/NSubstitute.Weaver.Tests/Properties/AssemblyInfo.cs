@@ -34,3 +34,6 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
+
+// for straight mocking outside of our patching system
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
