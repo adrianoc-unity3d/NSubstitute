@@ -46,7 +46,7 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
 
             if (typeToProxy == typeof(Substitute.StaticProxy))
             {
-                if (additionalInterfaces.Any())
+                if (additionalInterfaces != null && additionalInterfaces.Any())
                     throw new SubstituteException("Can not substitute interfaces as static");
 
                 var actualType = (Type)constructorArguments[0];
@@ -69,7 +69,7 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
             }
 
             // requests for additional interfaces cannot be done via patching (not per-instance anyway)
-            if (additionalInterfaces.Any() || instanceMocker == null)
+            if ((additionalInterfaces != null && additionalInterfaces.Any()) || instanceMocker == null)
             {
                 return _proxyGenerator.CreateClassProxy(typeToProxy, additionalInterfaces, proxyGenerationOptions, constructorArguments, interceptor);
             }
