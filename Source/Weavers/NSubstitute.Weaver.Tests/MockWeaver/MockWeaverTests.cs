@@ -358,6 +358,7 @@ class C {
         [TestCase("public class C { public C() { System.Console.WriteLine(42); } void Dummy() { } }", TestName = "NonEmptyDefaultCtor")]
         [TestCase("public class C { public C(int i = 0) { System.Console.WriteLine(42); } void Dummy() { } }", TestName = "DefaultCtorWithDefaultParameters")]
         [TestCase("public class Base {} public class C : Base { }", TestName = "NoDefaultCtorNonObjectAsBaseType")]
+        [TestCase("public class A : Base { } public class Base {}", TestName = "NoDefaultCtorNonObjectAsBaseTypeReversed")]
         [TestCase("public class Base { public Base(int i) {} void Dummy() { } } public class C : Base { C(int i):base(i) { } void Dummy() { } }", TestName = "NoDefaultCtorWithBaseTypeWithNoDefaultCtor")]
         [TestCase("public class Base<T> { } public class C : Base<object> { C(int i):base() { } void Dummy() { } }", TestName = "GenericBase")]
         public void Ensure_A_Public_Non_Throwing_Default_Ctor_Exists(string source)
