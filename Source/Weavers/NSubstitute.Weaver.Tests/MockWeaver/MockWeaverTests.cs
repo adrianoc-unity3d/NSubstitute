@@ -100,6 +100,14 @@ namespace NSubstitute.Weaver.Tests
         }
 
         [Test]
+        public void ICallCtor()
+        {
+            AssertHookInjection(
+                "using System.Runtime.CompilerServices; class C { [MethodImpl(MethodImplOptions.InternalCall)] public extern C(); }",
+                "icall", (_, __) => 42, 42);
+        }
+
+        [Test]
         public void VoidNoParamInstanceMethod()
         {
             bool called = false;
