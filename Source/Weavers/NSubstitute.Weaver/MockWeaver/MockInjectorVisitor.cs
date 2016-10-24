@@ -27,7 +27,7 @@ namespace NSubstitute.Weaver
             m_HookForInstance = fakeFramework.MainModule.Types.Single(t => t.Name == "CastlePatchedInterceptorRegistry").Methods.Single(m => m.Name == "CallMockMethodOrImpl");
 
             var compilerServicesType = new TypeReference("System.Runtime.CompilerServices", "CompilerGeneratedAttribute", module, m_MSCorlibReference);
-            m_CompilerGeneratedAttrCtor = module.Import(compilerServicesType.Resolve().GetConstructors().Single(ctor => !ctor.HasParameters));
+            m_CompilerGeneratedAttrCtor = module.Import(compilerServicesType.Resolve().GetConstructors().Single(ctor => !ctor.IsStatic && !ctor.HasParameters));
 
             m_ObjectType = new TypeReference("System", "Object", module, m_MSCorlibReference);
             m_TypeType = new TypeReference("System", "Type", module, m_MSCorlibReference);
@@ -75,7 +75,7 @@ namespace NSubstitute.Weaver
                 return;
 
             MethodDefinition ctor = null;
-            var ctors = typeDefinition.GetConstructors().Where(candiate => candiate.Parameters.Count == 0 || candiate.Parameters.All(p => p.HasDefault));
+            var ctors = typeDefinition.GetConstructors().Where(candidate => !candidate.IsStatic && (candidate.Parameters.Count == 0 || candidate.Parameters.All(p => p.HasDefault)));
             if (ctors.Count() == 0)
             {
                 ctor = new MethodDefinition(".ctor", MethodAttributes.Public | MethodAttributes.RTSpecialName | MethodAttributes.SpecialName | MethodAttributes.HideBySig, typeDefinition.Module.TypeSystem.Void)
@@ -99,7 +99,7 @@ namespace NSubstitute.Weaver
 
 
             ilProcessor.Append(ilProcessor.Create(OpCodes.Ldarg_0));
-            var baseDefaultCtor = (MethodReference)typeDefinition.BaseType.Resolve().GetConstructors().SingleOrDefault(candidate => candidate.Parameters.Count == 0);
+            var baseDefaultCtor = (MethodReference)typeDefinition.BaseType.Resolve().GetConstructors().SingleOrDefault(candidate => !candidate.IsStatic && candidate.Parameters.Count == 0);
 
             if (typeDefinition.BaseType.IsGenericInstance)
             {
