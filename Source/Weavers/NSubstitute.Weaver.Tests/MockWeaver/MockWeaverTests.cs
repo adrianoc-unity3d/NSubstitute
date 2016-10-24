@@ -362,6 +362,7 @@ class C {
         [TestCase("public class Base { public Base(int i) {} void Dummy() { } } public class C : Base { C(int i):base(i) { } void Dummy() { } }", TestName = "NoDefaultCtorWithBaseTypeWithNoDefaultCtor")]
         [TestCase("public class Base<T> { } public class C : Base<object> { C(int i):base() { } void Dummy() { } }", TestName = "GenericBase")]
         [TestCase("public class Base { static Base() {} } public class C : Base { public C() { } void Dummy() { } }", TestName = "BaseHasCctor")]
+        [TestCase("public class C : Base { public C() : base(null) { } void Dummy() { } } public class Base { public Base(string s) { } }", TestName = "DefaultCtorWithBaseThatHasNonDefaultCtor")]
         public void Ensure_A_Public_Non_Throwing_Default_Ctor_Exists(string source)
         {
             AssertPatchedAssembly(
