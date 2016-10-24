@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -14,7 +13,6 @@ namespace NSubstitute.Weaver
         readonly MethodDefinition m_HookForInstance;
         readonly Stack<List<MethodDefinition>> m_InjectedMethods = new Stack<List<MethodDefinition>>();
         readonly IList<MethodDefinition> m_Processed = new List<MethodDefinition>();
-        readonly AssemblyNameReference m_MSCorlibReference;
         readonly MethodReference m_CompilerGeneratedAttrCtor;
         readonly TypeReference m_ObjectType;
         readonly MethodReference m_GetTypeFromHandleMethod;
@@ -22,15 +20,15 @@ namespace NSubstitute.Weaver
 
         public MockInjectorVisitor(AssemblyDefinition fakeFramework, ModuleDefinition module)
         {
-            m_MSCorlibReference = module.AssemblyReferences.Single(ar => ar.Name == "mscorlib");
+            var msCorlibReference = module.AssemblyReferences.Single(ar => ar.Name == "mscorlib");
 
             m_HookForInstance = fakeFramework.MainModule.Types.Single(t => t.Name == "CastlePatchedInterceptorRegistry").Methods.Single(m => m.Name == "CallMockMethodOrImpl");
 
-            var compilerServicesType = new TypeReference("System.Runtime.CompilerServices", "CompilerGeneratedAttribute", module, m_MSCorlibReference);
+            var compilerServicesType = new TypeReference("System.Runtime.CompilerServices", "CompilerGeneratedAttribute", module, msCorlibReference);
             m_CompilerGeneratedAttrCtor = module.Import(compilerServicesType.Resolve().GetConstructors().Single(ctor => !ctor.IsStatic && !ctor.HasParameters));
 
-            m_ObjectType = new TypeReference("System", "Object", module, m_MSCorlibReference);
-            m_TypeType = new TypeReference("System", "Type", module, m_MSCorlibReference);
+            m_ObjectType = new TypeReference("System", "Object", module, msCorlibReference);
+            m_TypeType = new TypeReference("System", "Type", module, msCorlibReference);
 
             var resolvedSystemType = m_TypeType.Resolve();
             m_GetTypeFromHandleMethod = module.Import(resolvedSystemType.Methods.Single(m => m.Name == "GetTypeFromHandle" && m.HasParameters && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.FullName == "System.RuntimeTypeHandle"));
@@ -67,16 +65,16 @@ namespace NSubstitute.Weaver
             EnsureTypeHasEmptyDefaultCtor(typeDefinition, injectedMethods);
         }
 
-        private void EnsureTypeHasEmptyDefaultCtor(TypeDefinition typeDefinition, List<MethodDefinition> injectedMethods)
+        static void EnsureTypeHasEmptyDefaultCtor(TypeDefinition typeDefinition, List<MethodDefinition> injectedMethods)
         {
             if (typeDefinition.IsValueType)
                 return;
             if (injectedMethods.Count == 0)
                 return;
 
-            MethodDefinition ctor = null;
+            MethodDefinition ctor;
             var ctors = typeDefinition.GetConstructors().Where(candidate => !candidate.IsStatic && (candidate.Parameters.Count == 0 || candidate.Parameters.All(p => p.HasDefault)));
-            if (ctors.Count() == 0)
+            if (!ctors.Any())
             {
                 ctor = new MethodDefinition(".ctor", MethodAttributes.Public | MethodAttributes.RTSpecialName | MethodAttributes.SpecialName | MethodAttributes.HideBySig, typeDefinition.Module.TypeSystem.Void)
                 {
