@@ -62,15 +62,31 @@ namespace NSubstitute.Weaver
 
             InjectMockingFields(typeDefinition, injectedMethods);
 
-            EnsureTypeHasEmptyDefaultCtor(typeDefinition, injectedMethods);
+			if (injectedMethods.Count > 0)
+				EnsureEmptyDefaultCtor(typeDefinition);
         }
 
-        static void EnsureTypeHasEmptyDefaultCtor(TypeDefinition typeDefinition, List<MethodDefinition> injectedMethods)
+        static void EnsureEmptyDefaultCtor(TypeDefinition typeDefinition)
+        {
+	        if (EnsureBaseTypeHasEmptyDefaultCtor(typeDefinition))
+	        {
+		        EnsureTypeHasEmptyDefaultCtor(typeDefinition);
+	        }
+        }
+
+	    private static bool EnsureBaseTypeHasEmptyDefaultCtor(TypeDefinition typeDefinition)
+	    {
+		    var baseType = typeDefinition.BaseType.Resolve();
+		    if (baseType.Scope != typeDefinition.Scope)
+			    return baseType.GetConstructors().SingleOrDefault(candidate => !candidate.IsStatic && (candidate.Parameters.Count == 0 || candidate.Parameters.All(p => p.HasDefault))) != null;
+
+			EnsureEmptyDefaultCtor(baseType);
+		    return true;
+	    }
+
+	    static void EnsureTypeHasEmptyDefaultCtor(TypeDefinition typeDefinition)
         {
             if (typeDefinition.IsValueType)
-                return;
-
-            if (injectedMethods.Count == 0)
                 return;
 
             MethodDefinition ctor;
