@@ -103,7 +103,7 @@ namespace NSubstitute.Weaver.Tests
         public void ICallCtor()
         {
             AssertHookInjection(
-                "using System.Runtime.CompilerServices; class C { [MethodImpl(MethodImplOptions.InternalCall)] public extern C(); }",
+                "using System.Runtime.CompilerServices; class C { [MethodImpl(MethodImplOptions.InternalCall)] public extern C(); int M() { return -1; } }",
                 "icall", (_, __) => 42, 42);
         }
 
@@ -490,7 +490,7 @@ class C {
                 MethodInfo method;
                 if (originalMethodDeclaration != null)
                 {
-                    method = type.GetMethod(originalMethodDeclaration.Identifier.ValueText);
+                    method = type.GetMethod(originalMethodDeclaration.Identifier.ValueText, BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 }
                 else
                 {

@@ -69,6 +69,7 @@ namespace NSubstitute.Weaver
         {
             if (typeDefinition.IsValueType)
                 return;
+
             if (injectedMethods.Count == 0)
                 return;
 
@@ -89,12 +90,13 @@ namespace NSubstitute.Weaver
             {
                 ctor = ctors.First();
                 ctor.IsPublic = true;
+
+	            EnsureMethodHasBody(ctor);
             }
 
             var body = ctor.Body;
             var ilProcessor = body.GetILProcessor();
             body.Instructions.Clear();
-
 
             ilProcessor.Append(ilProcessor.Create(OpCodes.Ldarg_0));
             var baseDefaultCtor = (MethodReference)typeDefinition.BaseType.Resolve().GetConstructors().SingleOrDefault(candidate => !candidate.IsStatic && candidate.Parameters.Count == 0);
@@ -220,11 +222,9 @@ namespace NSubstitute.Weaver
 
         void ReplaceBodyWithProxyCall(MethodDefinition method)
         {
-            if (!method.HasBody)
-                method.Body = new MethodBody(method);
+            EnsureMethodHasBody(method);
 
-            method.ImplAttributes &= ~MethodImplAttributes.InternalCall;
-            method.Body.Variables.Clear();
+	        method.Body.Variables.Clear();
             var il = method.Body.GetILProcessor();
             il.Body.Instructions.Clear();
             il.Body.ExceptionHandlers.Clear();
@@ -319,7 +319,15 @@ namespace NSubstitute.Weaver
             il.Append(il.Create(OpCodes.Ret));
         }
 
-        static Instruction GetStindFromType(TypeReference type)
+	    private static void EnsureMethodHasBody(MethodDefinition method)
+	    {
+		    if (!method.HasBody)
+			    method.Body = new MethodBody(method);
+
+		    method.ImplAttributes &= ~MethodImplAttributes.InternalCall;
+	    }
+
+	    static Instruction GetStindFromType(TypeReference type)
         {
             if (type.MetadataType == MetadataType.SByte)
                 return Instruction.Create(OpCodes.Stind_I1);
